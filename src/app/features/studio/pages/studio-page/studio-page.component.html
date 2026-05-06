@@ -1,0 +1,260 @@
+<main class="studio">
+  <header class="studio__header">
+    <div>
+      <h1>StemLab</h1>
+      <p>DAW educativa de 4 pistas</p>
+    </div>
+
+    <div class="project-controls">
+      <label class="project-name-control">
+        Nombre
+        <input
+          type="text"
+          [value]="project().name"
+          placeholder="Nombre de la canción"
+          (input)="changeProjectName($event)"
+        />
+      </label>
+
+      <label class="bpm-control">
+        BPM
+        <input
+          type="number"
+          min="60"
+          max="200"
+          [value]="project().bpm"
+          (input)="changeBpm($event)"
+        />
+      </label>
+    </div>
+  </header>
+
+  <section class="transport">
+  <button type="button" (click)="play()">Play</button>
+  <button type="button" (click)="stop()">Stop</button>
+  <button type="button" (click)="clear()">Clear total</button>
+
+  <button
+    type="button"
+    class="metronome-button"
+    [class.metronome-button--active]="isMetronomeEnabled()"
+    (click)="toggleMetronome()"
+  >
+    {{ isMetronomeEnabled() ? 'Metrónomo On' : 'Metrónomo Off' }}
+  </button>
+
+  <button type="button" (click)="newProject()">Nueva canción</button>
+  <button type="button" (click)="save()">Guardar</button>
+  <button type="button" (click)="openLoadPanel()">Cargar</button>
+</section>
+
+  <section class="play-status">
+  @if (isPlaying()) {
+    <span class="play-status__dot"></span>
+    Reproduciendo beat {{ currentStep() !== null ? currentStep()! + 1 : '-' }} / 16
+
+    @if (isMetronomeEnabled()) {
+      <span class="play-status__metronome">· Metrónomo activo</span>
+    }
+  } @else {
+    Parado
+
+    @if (isMetronomeEnabled()) {
+      <span class="play-status__metronome">· Metrónomo listo</span>
+    }
+  }
+</section>
+
+  <section class="timeline">
+    <div class="timeline__empty"></div>
+
+    @for (stepNumber of stepNumbers(); track stepNumber) {
+      <div
+        class="timeline__step"
+        [class.timeline__step--playing]="isCurrentStep($index)"
+      >
+        {{ stepNumber }}
+      </div>
+    }
+  </section>
+
+  <section class="tracks">
+    @for (track of project().tracks; track track.id) {
+      <article class="track-card">
+        <header class="track-card__header">
+          <div>
+            <h2>{{ track.name }}</h2>
+
+            @if (track.kind === 'piano') {
+              <p>Piano roll por escala</p>
+            }
+
+            @if (track.kind === 'drums') {
+              <p>Kick, snare y hihat</p>
+            }
+          </div>
+
+          <div class="track-card__actions">
+            <button
+  type="button"
+  class="small-button"
+  [class.small-button--active]="track.muted"
+  (click)="toggleMute(track.id)"
+>
+  {{ track.muted ? 'Muted' : 'Mute' }}
+</button>
+
+<button
+  type="button"
+  class="small-button"
+  [class.small-button--solo]="track.solo"
+  (click)="toggleSolo(track.id)"
+>
+  {{ track.solo ? 'Solo On' : 'Solo' }}
+</button>
+
+<button
+  type="button"
+  class="small-button"
+  (click)="clearTrack(track.id)"
+>
+  Clear
+</button>
+          </div>
+        </header>
+
+        @if (track.kind === 'piano') {
+          <div class="piano-roll">
+            @for (noteRow of track.notes; track noteRow.note) {
+              <div class="roll-row">
+                <div class="roll-label">
+                  {{ noteRow.label }}
+                </div>
+
+                @for (step of noteRow.steps; track $index) {
+                  <button
+  type="button"
+  class="step step--piano"
+  [class.step--active]="step.active"
+  [class.step--playing]="isCurrentStep($index)"
+  (pointerdown)="startPaintingPianoStep(track.id, noteRow.note, $index, step.active, $event)"
+  (pointerenter)="paintPianoStep(track.id, noteRow.note, $index)"
+  [attr.aria-label]="track.name + ' ' + noteRow.note + ' paso ' + ($index + 1)"
+></button>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        @if (track.kind === 'drums') {
+          <div class="drum-roll">
+            @for (soundRow of track.sounds; track soundRow.sound) {
+              <div class="roll-row">
+                <div class="roll-label">
+                  {{ soundRow.label }}
+                </div>
+
+                @for (step of soundRow.steps; track $index) {
+                  <button
+  type="button"
+  class="step step--drum"
+  [class.step--active]="step.active"
+  [class.step--playing]="isCurrentStep($index)"
+  (pointerdown)="startPaintingDrumStep(soundRow.sound, $index, step.active, $event)"
+  (pointerenter)="paintDrumStep(soundRow.sound, $index)"
+  [attr.aria-label]="soundRow.label + ' paso ' + ($index + 1)"
+></button>
+                }
+              </div>
+            }
+          </div>
+        }
+
+        <footer class="track-card__footer">
+          <label class="volume-control">
+            Volumen
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              [value]="track.volume"
+              (input)="changeVolume(track.id, $event)"
+            />
+          </label>
+        </footer>
+      </article>
+    }
+  </section>
+
+  @if (isLoadPanelOpen()) {
+    <section class="modal-backdrop" (click)="closeLoadPanel()">
+      <article class="load-panel" (click)="$event.stopPropagation()">
+        <header class="load-panel__header">
+          <div>
+            <h2>Cargar canción</h2>
+            <p>Selecciona una canción guardada.</p>
+          </div>
+
+          <button
+            type="button"
+            class="small-button"
+            (click)="closeLoadPanel()"
+          >
+            Cerrar
+          </button>
+        </header>
+
+        @if (savedProjects().length === 0) {
+          <div class="empty-saves">
+            No hay canciones guardadas todavía.
+          </div>
+        } @else {
+          <div class="saved-list">
+            @for (savedProject of savedProjects(); track savedProject.id) {
+              <button
+                type="button"
+                class="saved-song"
+                [class.saved-song--current]="savedProject.id === project().id"
+                (click)="loadProject(savedProject.id)"
+              >
+                <span class="saved-song__main">
+                  <strong>{{ savedProject.name }}</strong>
+                  <small>
+                    BPM {{ savedProject.bpm }} · Actualizada {{ formatDate(savedProject.updatedAt) }}
+                  </small>
+                </span>
+
+                <span class="saved-song__actions">
+                  @if (savedProject.id === project().id) {
+                    <span class="current-badge">Actual</span>
+                  }
+
+                  <span
+                    class="delete-song"
+                    role="button"
+                    tabindex="0"
+                    (click)="deleteSavedProject(savedProject.id, $event)"
+                  >
+                    Borrar
+                  </span>
+                </span>
+              </button>
+            }
+          </div>
+
+          <footer class="load-panel__footer">
+            <button
+              type="button"
+              class="danger-button"
+              (click)="deleteAllSavedProjects()"
+            >
+              Borrar todas las canciones
+            </button>
+          </footer>
+        }
+      </article>
+    </section>
+  }
+</main>
