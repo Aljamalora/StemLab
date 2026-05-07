@@ -3,7 +3,7 @@ import { AudioEngineService } from '../../../../core/services/audio-engine.servi
 import { ProjectStateService } from '../../../../core/services/project-state.service';
 import { StorageService } from '../../../../core/services/storage.service';
 import { StemlabProject } from '../../../../shared/models/stemlab-project.model';
-import { DrumSound, TrackType } from '../../../../shared/models/track.model';
+import { DrumSound, PianoTrack, PianoTrackType, TrackType } from '../../../../shared/models/track.model';
 
 @Component({
   selector: 'app-studio-page',
@@ -25,13 +25,34 @@ export class StudioPageComponent {
 
   readonly savedProjects = signal<StemlabProject[]>([]);
   readonly isLoadPanelOpen = signal<boolean>(false);
+  readonly selectedPianoTrackId = signal<PianoTrackType | null>(null);
+
+readonly selectedPianoTrack = computed<PianoTrack | null>(() => {
+  const selectedTrackId = this.selectedPianoTrackId();
+
+  if (!selectedTrackId) {
+    return null;
+  }
+
+  const selectedTrack = this.project().tracks.find(
+    track => track.id === selectedTrackId
+  );
+
+  if (!selectedTrack || selectedTrack.kind !== 'piano') {
+    return null;
+  }
+
+  return selectedTrack;
+});
 
   private isPainting = false;
   private paintValue: boolean | null = null;
 
   readonly stepNumbers = computed(() =>
-    Array.from({ length: 16 }, (_, index) => index + 1)
-  );
+  Array.from({ length: 16 }, (_, index) => index + 1)
+);
+
+readonly previewStepWidth = 100 / 16;
 
   @HostListener('document:pointerup')
   @HostListener('document:pointercancel')
@@ -46,10 +67,6 @@ export class StudioPageComponent {
 
   stop(): void {
     this.audioEngine.stop();
-  }
-
-  clear(): void {
-    this.projectState.clearProject();
   }
 
   clearTrack(trackId: TrackType): void {
@@ -253,9 +270,67 @@ export class StudioPageComponent {
   this.audioEngine.toggleMetronome();
   }
 
+  openPianoRollEditor(trackId: PianoTrackType): void {
+  this.closeLoadPanel();
+  this.selectedPianoTrackId.set(trackId);
+}
+
+closePianoRollEditor(): void {
+  this.selectedPianoTrackId.set(null);
+}
+
   isCurrentStep(stepIndex: number): boolean {
     return this.currentStep() === stepIndex;
   }
+
+hasActiveNotes(track: PianoTrack): boolean {
+  return track.notes.some(noteRow =>
+    noteRow.steps.some(step => step.active)
+  );
+}
+
+getPreviewNoteBlocks(track: PianoTrack): Array<{
+  id: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+  sharp: boolean;
+}> {
+  const totalRows = track.notes.length;
+  const totalSteps = 16;
+  const rowHeight = 100 / totalRows;
+  const stepWidth = 100 / totalSteps;
+
+  const blocks: Array<{
+    id: string;
+    left: number;
+    top: number;
+    width: number;
+    height: number;
+    sharp: boolean;
+  }> = [];
+
+  track.notes.forEach((noteRow, rowIndex) => {
+    noteRow.steps.forEach((step, stepIndex) => {
+      if (!step.active) {
+        return;
+      }
+
+      blocks.push({
+        id: `${track.id}-${noteRow.note}-${stepIndex}`,
+        left: stepIndex * stepWidth,
+        top: rowIndex * rowHeight,
+        width: stepWidth,
+        height: rowHeight,
+        sharp: noteRow.label.includes('#')
+      });
+    });
+  });
+
+  return blocks;
+}
+
 
   formatDate(date: string): string {
     return new Date(date).toLocaleString('es-ES', {

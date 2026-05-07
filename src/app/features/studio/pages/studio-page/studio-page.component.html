@@ -30,40 +30,39 @@
   </header>
 
   <section class="transport">
-  <button type="button" (click)="play()">Play</button>
-  <button type="button" (click)="stop()">Stop</button>
-  <button type="button" (click)="clear()">Clear total</button>
+    <button type="button" (click)="play()">Play</button>
+    <button type="button" (click)="stop()">Stop</button>
 
-  <button
-    type="button"
-    class="metronome-button"
-    [class.metronome-button--active]="isMetronomeEnabled()"
-    (click)="toggleMetronome()"
-  >
-    {{ isMetronomeEnabled() ? 'Metrónomo On' : 'Metrónomo Off' }}
-  </button>
+    <button
+      type="button"
+      class="metronome-button"
+      [class.metronome-button--active]="isMetronomeEnabled()"
+      (click)="toggleMetronome()"
+    >
+      {{ isMetronomeEnabled() ? 'Metrónomo On' : 'Metrónomo Off' }}
+    </button>
 
-  <button type="button" (click)="newProject()">Nueva canción</button>
-  <button type="button" (click)="save()">Guardar</button>
-  <button type="button" (click)="openLoadPanel()">Cargar</button>
-</section>
+    <button type="button" (click)="newProject()">Nueva canción</button>
+    <button type="button" (click)="save()">Guardar</button>
+    <button type="button" (click)="openLoadPanel()">Cargar</button>
+  </section>
 
   <section class="play-status">
-  @if (isPlaying()) {
-    <span class="play-status__dot"></span>
-    Reproduciendo beat {{ currentStep() !== null ? currentStep()! + 1 : '-' }} / 16
+    @if (isPlaying()) {
+      <span class="play-status__dot"></span>
+      Reproduciendo beat {{ currentStep() !== null ? currentStep()! + 1 : '-' }} / 16
 
-    @if (isMetronomeEnabled()) {
-      <span class="play-status__metronome">· Metrónomo activo</span>
-    }
-  } @else {
-    Parado
+      @if (isMetronomeEnabled()) {
+        <span class="play-status__metronome">· Metrónomo activo</span>
+      }
+    } @else {
+      Parado
 
-    @if (isMetronomeEnabled()) {
-      <span class="play-status__metronome">· Metrónomo listo</span>
+      @if (isMetronomeEnabled()) {
+        <span class="play-status__metronome">· Metrónomo listo</span>
+      }
     }
-  }
-</section>
+  </section>
 
   <section class="timeline">
     <div class="timeline__empty"></div>
@@ -86,7 +85,7 @@
             <h2>{{ track.name }}</h2>
 
             @if (track.kind === 'piano') {
-              <p>Piano roll por escala</p>
+              <p>Piano roll comprimido</p>
             }
 
             @if (track.kind === 'drums') {
@@ -95,57 +94,85 @@
           </div>
 
           <div class="track-card__actions">
+            @if (track.kind === 'piano') {
+              <button
+                type="button"
+                class="small-button small-button--edit-roll"
+                (click)="openPianoRollEditor(track.id)"
+              >
+                Editar roll
+              </button>
+            }
+
             <button
-  type="button"
-  class="small-button"
-  [class.small-button--active]="track.muted"
-  (click)="toggleMute(track.id)"
->
-  {{ track.muted ? 'Muted' : 'Mute' }}
-</button>
+              type="button"
+              class="small-button"
+              [class.small-button--active]="track.muted"
+              (click)="toggleMute(track.id)"
+            >
+              {{ track.muted ? 'Muted' : 'Mute' }}
+            </button>
 
-<button
-  type="button"
-  class="small-button"
-  [class.small-button--solo]="track.solo"
-  (click)="toggleSolo(track.id)"
->
-  {{ track.solo ? 'Solo On' : 'Solo' }}
-</button>
+            <button
+              type="button"
+              class="small-button"
+              [class.small-button--solo]="track.solo"
+              (click)="toggleSolo(track.id)"
+            >
+              {{ track.solo ? 'Solo On' : 'Solo' }}
+            </button>
 
-<button
-  type="button"
-  class="small-button"
-  (click)="clearTrack(track.id)"
->
-  Clear
-</button>
+            <button
+              type="button"
+              class="small-button"
+              (click)="clearTrack(track.id)"
+            >
+              Clear
+            </button>
           </div>
         </header>
 
-        @if (track.kind === 'piano') {
-          <div class="piano-roll">
-            @for (noteRow of track.notes; track noteRow.note) {
-              <div class="roll-row">
-                <div class="roll-label">
-                  {{ noteRow.label }}
-                </div>
+      @if (track.kind === 'piano') {
+  <div class="compressed-track-preview">
+    <div class="compressed-track-preview__header">
+      <span>Preview del roll</span>
+      <small>Pulsa <strong>Editar roll</strong> para modificar notas.</small>
+    </div>
 
-                @for (step of noteRow.steps; track $index) {
-                  <button
-  type="button"
-  class="step step--piano"
-  [class.step--active]="step.active"
-  [class.step--playing]="isCurrentStep($index)"
-  (pointerdown)="startPaintingPianoStep(track.id, noteRow.note, $index, step.active, $event)"
-  (pointerenter)="paintPianoStep(track.id, noteRow.note, $index)"
-  [attr.aria-label]="track.name + ' ' + noteRow.note + ' paso ' + ($index + 1)"
-></button>
-                }
-              </div>
-            }
-          </div>
-        }
+    @if (hasActiveNotes(track)) {
+      <div class="mini-pattern">
+        <div class="mini-pattern__label">
+          Notas
+        </div>
+
+        <div class="mini-pattern__canvas">
+          @if (currentStep() !== null) {
+            <span
+              class="mini-pattern__playhead"
+              [style.left.%]="currentStep()! * previewStepWidth"
+              [style.width.%]="previewStepWidth"
+            ></span>
+          }
+
+          @for (block of getPreviewNoteBlocks(track); track block.id) {
+            <span
+              class="mini-pattern__note"
+              [class.mini-pattern__note--sharp]="block.sharp"
+              [style.left.%]="block.left"
+              [style.top.%]="block.top"
+              [style.width.%]="block.width"
+              [style.height.%]="block.height"
+            ></span>
+          }
+        </div>
+      </div>
+    } @else {
+      <div class="compressed-track-preview__empty">
+        No hay notas marcadas todavía.
+      </div>
+    }
+  </div>
+}
 
         @if (track.kind === 'drums') {
           <div class="drum-roll">
@@ -157,14 +184,14 @@
 
                 @for (step of soundRow.steps; track $index) {
                   <button
-  type="button"
-  class="step step--drum"
-  [class.step--active]="step.active"
-  [class.step--playing]="isCurrentStep($index)"
-  (pointerdown)="startPaintingDrumStep(soundRow.sound, $index, step.active, $event)"
-  (pointerenter)="paintDrumStep(soundRow.sound, $index)"
-  [attr.aria-label]="soundRow.label + ' paso ' + ($index + 1)"
-></button>
+                    type="button"
+                    class="step step--drum"
+                    [class.step--active]="step.active"
+                    [class.step--playing]="isCurrentStep($index)"
+                    (pointerdown)="startPaintingDrumStep(soundRow.sound, $index, step.active, $event)"
+                    (pointerenter)="paintDrumStep(soundRow.sound, $index)"
+                    [attr.aria-label]="soundRow.label + ' paso ' + ($index + 1)"
+                  ></button>
                 }
               </div>
             }
@@ -187,6 +214,107 @@
       </article>
     }
   </section>
+
+  @if (selectedPianoTrack(); as editingTrack) {
+    <section class="modal-backdrop roll-editor-backdrop" (click)="closePianoRollEditor()">
+      <article class="roll-editor-panel" (click)="$event.stopPropagation()">
+        <header class="roll-editor-panel__header">
+          <div>
+            <h2>Editar {{ editingTrack.name }}</h2>
+            <p>Pinta notas manteniendo pulsado el clic y arrastrando por el roll.</p>
+          </div>
+
+          <button
+            type="button"
+            class="small-button"
+            (click)="closePianoRollEditor()"
+          >
+            Cerrar
+          </button>
+        </header>
+
+        <section class="roll-editor-timeline">
+          <div class="timeline__empty"></div>
+
+          @for (stepNumber of stepNumbers(); track stepNumber) {
+            <div
+              class="timeline__step"
+              [class.timeline__step--playing]="isCurrentStep($index)"
+            >
+              {{ stepNumber }}
+            </div>
+          }
+        </section>
+
+        <div class="piano-roll piano-roll--modal">
+          @for (noteRow of editingTrack.notes; track noteRow.note) {
+            <div class="roll-row">
+              <div
+                class="roll-label"
+                [class.roll-label--sharp]="noteRow.label.includes('#')"
+              >
+                {{ noteRow.label }}
+              </div>
+
+              @for (step of noteRow.steps; track $index) {
+                <button
+                  type="button"
+                  class="step step--piano"
+                  [class.step--active]="step.active"
+                  [class.step--playing]="isCurrentStep($index)"
+                  (pointerdown)="startPaintingPianoStep(editingTrack.id, noteRow.note, $index, step.active, $event)"
+                  (pointerenter)="paintPianoStep(editingTrack.id, noteRow.note, $index)"
+                  [attr.aria-label]="editingTrack.name + ' ' + noteRow.note + ' paso ' + ($index + 1)"
+                ></button>
+              }
+            </div>
+          }
+        </div>
+
+        <footer class="roll-editor-panel__footer">
+          <label class="volume-control">
+            Volumen
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.01"
+              [value]="editingTrack.volume"
+              (input)="changeVolume(editingTrack.id, $event)"
+            />
+          </label>
+
+          <div class="roll-editor-panel__actions">
+            <button
+              type="button"
+              class="small-button"
+              [class.small-button--active]="editingTrack.muted"
+              (click)="toggleMute(editingTrack.id)"
+            >
+              {{ editingTrack.muted ? 'Muted' : 'Mute' }}
+            </button>
+
+            <button
+              type="button"
+              class="small-button"
+              [class.small-button--solo]="editingTrack.solo"
+              (click)="toggleSolo(editingTrack.id)"
+            >
+              {{ editingTrack.solo ? 'Solo On' : 'Solo' }}
+            </button>
+
+            <button
+              type="button"
+              class="small-button"
+              (click)="clearTrack(editingTrack.id)"
+            >
+              Clear
+            </button>
+          </div>
+        </footer>
+      </article>
+    </section>
+  }
 
   @if (isLoadPanelOpen()) {
     <section class="modal-backdrop" (click)="closeLoadPanel()">
