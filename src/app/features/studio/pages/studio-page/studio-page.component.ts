@@ -161,7 +161,7 @@ export class StudioPageComponent {
   }
 
   async play(): Promise<void> {
-    await this.audioEngine.play(() => this.project());
+    await this.audioEngine.togglePlay(() => this.project());
   }
 
   stop(): void {

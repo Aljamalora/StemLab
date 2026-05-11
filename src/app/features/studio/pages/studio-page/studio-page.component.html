@@ -1,232 +1,290 @@
 <main class="studio">
-  <header class="studio__header">
-    <div>
-      <h1>StemLab</h1>
-      <p>DAW educativa de 4 pistas</p>
-    </div>
-
-    <div class="project-controls">
-      <label class="project-name-control">
-        Nombre
-        <input
-          type="text"
-          [value]="project().name"
-          placeholder="Nombre de la canción"
-          (input)="changeProjectName($event)"
-        />
-      </label>
-
-      <label class="bpm-control">
-        BPM
-        <input
-          type="number"
-          min="60"
-          max="200"
-          [value]="project().bpm"
-          (input)="changeBpm($event)"
-        />
-      </label>
-    </div>
-  </header>
-
-  <section class="transport">
-    <button type="button" (click)="play()">Play</button>
-    <button type="button" (click)="stop()">Stop</button>
-
-    <button
-      type="button"
-      class="metronome-button"
-      [class.metronome-button--active]="isMetronomeEnabled()"
-      (click)="toggleMetronome()"
-    >
-      {{ isMetronomeEnabled() ? 'Metrónomo On' : 'Metrónomo Off' }}
-    </button>
-
-    <button type="button" (click)="newProject()">Nueva canción</button>
-    <button type="button" (click)="save()">Guardar</button>
-    <button type="button" (click)="openLoadPanel()">Cargar</button>
-  </section>
-
-  <section class="play-status">
-    @if (isPlaying()) {
-      <span class="play-status__dot"></span>
-      Reproduciendo beat {{ currentStep() !== null ? currentStep()! + 1 : '-' }} / 16
-
-      @if (isMetronomeEnabled()) {
-        <span class="play-status__metronome">· Metrónomo activo</span>
-      }
-    } @else {
-      Parado
-
-      @if (isMetronomeEnabled()) {
-        <span class="play-status__metronome">· Metrónomo listo</span>
-      }
-    }
-  </section>
-
-  <section class="timeline">
-    <div class="timeline__empty"></div>
-
-    @for (stepNumber of stepNumbers(); track stepNumber) {
-      <div
-        class="timeline__step"
-        [class.timeline__step--playing]="isCurrentStep($index)"
-      >
-        {{ stepNumber }}
+  <header class="studio-header">
+    <section class="header-row header-row--top">
+      <div class="brand-block">
+        <h1>StemLab</h1>
       </div>
-    }
-  </section>
+
+      <div class="song-bar">
+        <label class="song-name-field">
+          <input
+            type="text"
+            [value]="project().name"
+            placeholder="Untitled Song"
+            (input)="changeProjectName($event)"
+          />
+        </label>
+
+        <div class="song-actions">
+          <button
+            type="button"
+            class="icon-button"
+            (click)="save()"
+            aria-label="Guardar canción"
+            title="Guardar"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M5 4h11l3 3v13H5z" />
+              <path d="M8 4v6h8V4" />
+              <path d="M8 20v-6h8v6" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="icon-button"
+            (click)="openLoadPanel()"
+            aria-label="Cargar canción"
+            title="Cargar"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M3 7h6l2 2h10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+              <path d="M3 7V6a2 2 0 0 1 2-2h4l2 2h4" />
+            </svg>
+          </button>
+
+          <button
+            type="button"
+            class="icon-button"
+            (click)="newProject()"
+            aria-label="Nueva canción"
+            title="Nueva canción"
+          >
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M14 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V10z" />
+              <path d="M14 4v6h6" />
+              <path d="M12 11v6" />
+              <path d="M9 14h6" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="header-row header-row--middle">
+      <div class="transport-bar">
+        <button
+          type="button"
+          class="icon-button icon-button--transport"
+          [class.icon-button--active]="isMetronomeEnabled()"
+          (click)="toggleMetronome()"
+          aria-label="Activar o desactivar metrónomo"
+          title="Metrónomo"
+        >
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M10 3h4" />
+            <path d="M8 21h8" />
+            <path d="M7 21 10 5h4l3 16z" />
+            <path d="M12 9v6" />
+            <path d="M12 9l4-2" />
+          </svg>
+        </button>
+
+        <label class="bpm-inline">
+          <span>BPM</span>
+          <input
+            type="number"
+            min="60"
+            max="200"
+            [value]="project().bpm"
+            (input)="changeBpm($event)"
+          />
+        </label>
+
+        <button
+          type="button"
+          class="transport-button"
+          (click)="play()"
+          [attr.aria-label]="isPlaying() ? 'Pausar' : 'Reproducir'"
+          [title]="isPlaying() ? 'Pausar' : 'Play'"
+        >
+          @if (isPlaying()) {
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5v14" />
+              <path d="M16 5v14" />
+            </svg>
+          } @else {
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M8 5v14l11-7z" />
+            </svg>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="transport-button transport-button--stop"
+          [class.transport-button--stop-active]="isPlaying()"
+          (click)="stop()"
+          aria-label="Detener reproducción"
+          title="Stop"
+        >
+          <span class="stop-indicator"></span>
+        </button>
+      </div>
+    </section>
+
+    <section class="header-row header-row--bottom">
+      <div class="timeline-header">
+        <div class="timeline-header__track-spacer"></div>
+        <div class="timeline-header__label-spacer"></div>
+
+        @for (stepNumber of stepNumbers(); track stepNumber) {
+          <div
+            class="timeline-header__step"
+            [class.timeline-header__step--playing]="isCurrentStep($index)"
+          >
+            {{ stepNumber }}
+          </div>
+        }
+      </div>
+    </section>
+  </header>
 
   <section class="tracks">
     @for (track of project().tracks; track track.id) {
       <article class="track-card">
-        <header class="track-card__header">
-          <div>
-            <h2>{{ track.name }}</h2>
+        <div class="track-shell">
+          <aside class="track-side">
+            <div class="track-title">
+              {{ track.name }}
+            </div>
 
             @if (track.kind === 'piano') {
-              <p>Piano roll comprimido</p>
+              <label class="track-select">
+                <select
+                  [value]="track.instrumentPreset"
+                  (change)="changePianoInstrument(track.id, $event)"
+                >
+                  @for (instrument of getInstrumentOptions(track.id); track instrument.value) {
+                    <option [value]="instrument.value">
+                      {{ instrument.label }}
+                    </option>
+                  }
+                </select>
+              </label>
             }
 
-            @if (track.kind === 'drums') {
-              <p>Kick, snare y hihat</p>
-            }
-          </div>
+            <label class="track-volume">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M5 10h4l5-4v12l-5-4H5z" />
+                <path d="M18 9a4 4 0 0 1 0 6" />
+              </svg>
 
-          <div class="track-card__actions">
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.01"
+                [value]="track.volume"
+                (input)="changeVolume(track.id, $event)"
+              />
+            </label>
+
+            <div class="track-actions">
+              <button
+                type="button"
+                class="track-action track-action--letter"
+                [class.track-action--active]="track.muted"
+                (click)="toggleMute(track.id)"
+                aria-label="Mute"
+                title="Mute"
+              >
+                M
+              </button>
+
+              <button
+                type="button"
+                class="track-action track-action--letter"
+                [class.track-action--solo]="track.solo"
+                (click)="toggleSolo(track.id)"
+                aria-label="Solo"
+                title="Solo"
+              >
+                S
+              </button>
+
+              <button
+                type="button"
+                class="track-action"
+                (click)="clearTrack(track.id)"
+                aria-label="Clear"
+                title="Clear"
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M4 7h16" />
+                  <path d="M9 7V4h6v3" />
+                  <path d="M7 7l1 13h8l1-13" />
+                  <path d="M10 11v6" />
+                  <path d="M14 11v6" />
+                </svg>
+              </button>
+            </div>
+          </aside>
+
+          <div class="track-main">
             @if (track.kind === 'piano') {
               <button
                 type="button"
-                class="small-button small-button--edit-roll"
+                class="preview-button"
                 (click)="openPianoRollEditor(track.id)"
+                [attr.aria-label]="'Editar piano roll de ' + track.name"
               >
-                Editar roll
+                <div class="mini-pattern">
+                  <div class="mini-pattern__label" aria-hidden="true"></div>
+
+                  <div class="mini-pattern__canvas">
+                    @if (currentStep() !== null) {
+                      <span
+                        class="mini-pattern__playhead"
+                        [style.left.%]="currentStep()! * previewStepWidth"
+                        [style.width.%]="previewStepWidth"
+                      ></span>
+                    }
+
+                    @for (block of getPreviewNoteBlocks(track); track block.id) {
+                      <span
+                        class="mini-pattern__note"
+                        [class.mini-pattern__note--sharp]="block.sharp"
+                        [style.left.%]="block.left"
+                        [style.top.%]="block.top"
+                        [style.width.%]="block.width"
+                        [style.height.%]="block.height"
+                      ></span>
+                    }
+
+                    @if (!hasActiveNotes(track)) {
+                      <span class="mini-pattern__hint">Haz clic para editar</span>
+                    }
+                  </div>
+                </div>
               </button>
             }
 
-            <button
-              type="button"
-              class="small-button"
-              [class.small-button--active]="track.muted"
-              (click)="toggleMute(track.id)"
-            >
-              {{ track.muted ? 'Muted' : 'Mute' }}
-            </button>
+            @if (track.kind === 'drums') {
+              <div class="drum-roll drum-roll--main">
+                @for (soundRow of track.sounds; track soundRow.sound) {
+                  <div class="roll-row">
+                    <div class="roll-label">
+                      {{ soundRow.label }}
+                    </div>
 
-            <button
-              type="button"
-              class="small-button"
-              [class.small-button--solo]="track.solo"
-              (click)="toggleSolo(track.id)"
-            >
-              {{ track.solo ? 'Solo On' : 'Solo' }}
-            </button>
-
-            <button
-              type="button"
-              class="small-button"
-              (click)="clearTrack(track.id)"
-            >
-              Clear
-            </button>
-          </div>
-        </header>
-
-        @if (track.kind === 'piano') {
-          <div class="compressed-track-preview">
-            <div class="compressed-track-preview__header">
-              <span>Preview del roll</span>
-              <small>Pulsa <strong>Editar roll</strong> para modificar notas.</small>
-            </div>
-
-            @if (hasActiveNotes(track)) {
-              <div class="mini-pattern">
-                <div class="mini-pattern__label">
-                  Notas
-                </div>
-
-                <div class="mini-pattern__canvas">
-                  @if (currentStep() !== null) {
-                    <span
-                      class="mini-pattern__playhead"
-                      [style.left.%]="currentStep()! * previewStepWidth"
-                      [style.width.%]="previewStepWidth"
-                    ></span>
-                  }
-
-                  @for (block of getPreviewNoteBlocks(track); track block.id) {
-                    <span
-                      class="mini-pattern__note"
-                      [class.mini-pattern__note--sharp]="block.sharp"
-                      [style.left.%]="block.left"
-                      [style.top.%]="block.top"
-                      [style.width.%]="block.width"
-                      [style.height.%]="block.height"
-                    ></span>
-                  }
-                </div>
-              </div>
-            } @else {
-              <div class="compressed-track-preview__empty">
-                No hay notas marcadas todavía.
-              </div>
-            }
-          </div>
-        }
-
-        @if (track.kind === 'drums') {
-          <div class="drum-roll">
-            @for (soundRow of track.sounds; track soundRow.sound) {
-              <div class="roll-row">
-                <div class="roll-label">
-                  {{ soundRow.label }}
-                </div>
-
-                @for (step of soundRow.steps; track $index) {
-                  <button
-                    type="button"
-                    class="step step--drum"
-                    [class.step--active]="step.active"
-                    [class.step--playing]="isCurrentStep($index)"
-                    (pointerdown)="startPaintingDrumStep(soundRow.sound, $index, step.active, $event)"
-                    (pointerenter)="paintDrumStep(soundRow.sound, $index)"
-                    [attr.aria-label]="soundRow.label + ' paso ' + ($index + 1)"
-                  ></button>
+                    @for (step of soundRow.steps; track $index) {
+                      <button
+                        type="button"
+                        class="step step--drum"
+                        [class.step--active]="step.active"
+                        [class.step--playing]="isCurrentStep($index)"
+                        (pointerdown)="startPaintingDrumStep(soundRow.sound, $index, step.active, $event)"
+                        (pointerenter)="paintDrumStep(soundRow.sound, $index)"
+                        [attr.aria-label]="soundRow.label + ' paso ' + ($index + 1)"
+                      ></button>
+                    }
+                  </div>
                 }
               </div>
             }
           </div>
-        }
-
-        <footer class="track-card__footer">
-          @if (track.kind === 'piano') {
-            <label class="instrument-control">
-              Instrumento
-              <select
-                [value]="track.instrumentPreset"
-                (change)="changePianoInstrument(track.id, $event)"
-              >
-                @for (instrument of getInstrumentOptions(track.id); track instrument.value) {
-                  <option [value]="instrument.value">
-                    {{ instrument.label }}
-                  </option>
-                }
-              </select>
-            </label>
-          }
-
-          <label class="volume-control">
-            Volumen
-            <input
-              type="range"
-              min="0"
-              max="1"
-              step="0.01"
-              [value]="track.volume"
-              (input)="changeVolume(track.id, $event)"
-            />
-          </label>
-        </footer>
+        </div>
       </article>
     }
   </section>
@@ -238,7 +296,7 @@
           <div>
             <h2>Editar {{ editingTrack.name }}</h2>
             <p>
-              Clic izquierdo para crear/borrar. Clic derecho y arrastrar para alargar o acortar notas.
+              Clic izquierdo para crear o borrar. Clic derecho y arrastrar para alargar o acortar notas.
             </p>
           </div>
 

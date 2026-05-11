@@ -39,13 +39,21 @@ export class AudioEngineService {
 
     await this.initAudio();
 
-    this.stopSequenceOnly();
-
     this.getLiveProject = projectGetter;
 
     const project = this.getLiveProject();
 
     this.setBpm(project.bpm);
+
+    if (this.sequence) {
+      this.Tone.Transport.start();
+
+      this.ngZone.run(() => {
+        this.isPlaying.set(true);
+      });
+
+      return;
+    }
 
     this.ngZone.run(() => {
       this.currentStep.set(null);
@@ -98,10 +106,32 @@ export class AudioEngineService {
     this.Tone.Transport.start();
   }
 
+  pause(): void {
+    if (!this.Tone || !this.sequence) {
+      return;
+    }
+
+    this.Tone.Transport.pause();
+
+    this.ngZone.run(() => {
+      this.isPlaying.set(false);
+    });
+  }
+
+  togglePlay(projectGetter: () => StemlabProject): Promise<void> | void {
+    if (this.isPlaying()) {
+      this.pause();
+      return;
+    }
+
+    return this.play(projectGetter);
+  }
+
   stop(): void {
     if (this.Tone) {
       this.Tone.Transport.stop();
       this.Tone.Transport.cancel();
+      this.Tone.Transport.position = 0;
     }
 
     if (this.sequence) {
@@ -137,6 +167,7 @@ export class AudioEngineService {
     if (this.Tone) {
       this.Tone.Transport.stop();
       this.Tone.Transport.cancel();
+      this.Tone.Transport.position = 0;
     }
 
     if (this.sequence) {
