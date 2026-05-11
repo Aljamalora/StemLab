@@ -237,7 +237,9 @@
         <header class="roll-editor-panel__header">
           <div>
             <h2>Editar {{ editingTrack.name }}</h2>
-            <p>Pinta notas manteniendo pulsado el clic y arrastrando por el roll.</p>
+            <p>
+              Clic izquierdo para crear/borrar. Clic derecho y arrastrar para alargar o acortar notas.
+            </p>
           </div>
 
           <button
@@ -262,9 +264,12 @@
           }
         </section>
 
-        <div class="piano-roll piano-roll--modal">
+        <div
+          class="piano-roll piano-roll--modal"
+          (contextmenu)="preventContextMenu($event)"
+        >
           @for (noteRow of editingTrack.notes; track noteRow.note) {
-            <div class="roll-row">
+            <div class="roll-row roll-row--piano" #pianoRow>
               <div
                 class="roll-label"
                 [class.roll-label--sharp]="noteRow.label.includes('#')"
@@ -278,10 +283,20 @@
                   class="step step--piano"
                   [class.step--active]="step.active"
                   [class.step--playing]="isCurrentStep($index)"
-                  (pointerdown)="startPaintingPianoStep(editingTrack.id, noteRow.note, $index, step.active, $event)"
+                  (pointerdown)="startPaintingPianoStep(editingTrack.id, noteRow.note, $index, $event, pianoRow)"
                   (pointerenter)="paintPianoStep(editingTrack.id, noteRow.note, $index)"
+                  (contextmenu)="preventContextMenu($event)"
                   [attr.aria-label]="editingTrack.name + ' ' + noteRow.note + ' paso ' + ($index + 1)"
                 ></button>
+              }
+
+              @for (block of getPianoRowNoteBlocks(noteRow); track block.id) {
+                <span
+                  class="piano-note-bar"
+                  [class.piano-note-bar--sharp]="block.sharp"
+                  [style.left]="block.left"
+                  [style.width]="block.width"
+                ></span>
               }
             </div>
           }

@@ -6,6 +6,7 @@ import { StemlabProject } from '../../../../shared/models/stemlab-project.model'
 import {
   DrumSound,
   PianoInstrumentPreset,
+  PianoRollRow,
   PianoTrack,
   PianoTrackType,
   TrackType
@@ -111,11 +112,52 @@ export class StudioPageComponent {
   private isPainting = false;
   private paintValue: boolean | null = null;
 
+  private isResizingPianoNote = false;
+  private resizeTrackId: TrackType | null = null;
+  private resizeNote: string | null = null;
+  private resizeStartStep = 0;
+  private resizeRowElement: HTMLElement | null = null;
+
   @HostListener('document:pointerup')
   @HostListener('document:pointercancel')
   stopPainting(): void {
     this.isPainting = false;
     this.paintValue = null;
+
+    this.isResizingPianoNote = false;
+    this.resizeTrackId = null;
+    this.resizeNote = null;
+    this.resizeStartStep = 0;
+    this.resizeRowElement = null;
+  }
+
+  @HostListener('document:pointermove', ['$event'])
+  resizePianoNoteFromPointer(event: PointerEvent): void {
+    if (
+      !this.isResizingPianoNote ||
+      !this.resizeTrackId ||
+      !this.resizeNote ||
+      !this.resizeRowElement
+    ) {
+      return;
+    }
+
+    const targetStep = this.getStepIndexFromPointer(
+      event,
+      this.resizeRowElement
+    );
+
+    const duration = Math.max(
+      1,
+      targetStep - this.resizeStartStep + 1
+    );
+
+    this.projectState.setPianoStepDuration(
+      this.resizeTrackId,
+      this.resizeNote,
+      this.resizeStartStep,
+      duration
+    );
   }
 
   async play(): Promise<void> {
@@ -232,20 +274,52 @@ export class StudioPageComponent {
     trackId: TrackType,
     note: string,
     stepIndex: number,
-    currentActive: boolean,
-    event: PointerEvent
+    event: PointerEvent,
+    rowElement: HTMLElement
   ): void {
     event.preventDefault();
 
-    this.isPainting = true;
-    this.paintValue = !currentActive;
+    const existingNote = this.findPianoNoteAt(trackId, note, stepIndex);
 
-    this.projectState.setPianoStep(
-      trackId,
-      note,
-      stepIndex,
-      this.paintValue
-    );
+    if (event.button === 2) {
+      this.isPainting = false;
+      this.paintValue = null;
+
+      const anchorStep = existingNote?.anchorStep ?? stepIndex;
+
+      this.isResizingPianoNote = true;
+      this.resizeTrackId = trackId;
+      this.resizeNote = note;
+      this.resizeStartStep = anchorStep;
+      this.resizeRowElement = rowElement;
+
+      if (!existingNote) {
+        this.projectState.setPianoStepDuration(
+          trackId,
+          note,
+          stepIndex,
+          1
+        );
+      }
+
+      this.resizePianoNoteFromPointer(event);
+      return;
+    }
+
+    if (event.button !== 0) {
+      return;
+    }
+
+    this.isResizingPianoNote = false;
+    this.resizeTrackId = null;
+    this.resizeNote = null;
+    this.resizeStartStep = 0;
+    this.resizeRowElement = null;
+
+    this.isPainting = true;
+    this.paintValue = existingNote ? false : true;
+
+    this.applyPianoPaintValue(trackId, note, stepIndex);
   }
 
   paintPianoStep(
@@ -253,16 +327,15 @@ export class StudioPageComponent {
     note: string,
     stepIndex: number
   ): void {
+    if (this.isResizingPianoNote) {
+      return;
+    }
+
     if (!this.isPainting || this.paintValue === null) {
       return;
     }
 
-    this.projectState.setPianoStep(
-      trackId,
-      note,
-      stepIndex,
-      this.paintValue
-    );
+    this.applyPianoPaintValue(trackId, note, stepIndex);
   }
 
   startPaintingDrumStep(
@@ -359,6 +432,10 @@ export class StudioPageComponent {
     return this.currentStep() === stepIndex;
   }
 
+  preventContextMenu(event: Event): void {
+    event.preventDefault();
+  }
+
   hasActiveNotes(track: PianoTrack): boolean {
     return track.notes.some(noteRow =>
       noteRow.steps.some(step => step.active)
@@ -393,11 +470,14 @@ export class StudioPageComponent {
           return;
         }
 
+        const duration = Math.max(1, step.duration ?? 1);
+        const safeDuration = Math.min(duration, totalSteps - stepIndex);
+
         blocks.push({
           id: `${track.id}-${noteRow.note}-${stepIndex}`,
           left: stepIndex * stepWidth,
           top: rowIndex * rowHeight,
-          width: stepWidth,
+          width: stepWidth * safeDuration,
           height: rowHeight,
           sharp: noteRow.label.includes('#')
         });
@@ -407,11 +487,142 @@ export class StudioPageComponent {
     return blocks;
   }
 
+  getPianoRowNoteBlocks(noteRow: PianoRollRow): Array<{
+    id: string;
+    left: string;
+    width: string;
+    sharp: boolean;
+  }> {
+    return noteRow.steps
+      .map((step, stepIndex) => {
+        if (!step.active) {
+          return null;
+        }
+
+        const duration = Math.max(1, step.duration ?? 1);
+        const safeDuration = Math.min(duration, 16 - stepIndex);
+
+        return {
+          id: `${noteRow.note}-${stepIndex}`,
+          left: `calc(5rem + 0.4rem + ${stepIndex} * (2.25rem + 0.4rem))`,
+          width: `calc(${safeDuration} * 2.25rem + ${safeDuration - 1} * 0.4rem)`,
+          sharp: noteRow.label.includes('#')
+        };
+      })
+      .filter(block => block !== null) as Array<{
+        id: string;
+        left: string;
+        width: string;
+        sharp: boolean;
+      }>;
+  }
+
   formatDate(date: string): string {
     return new Date(date).toLocaleString('es-ES', {
       dateStyle: 'short',
       timeStyle: 'short'
     });
+  }
+
+  private applyPianoPaintValue(
+    trackId: TrackType,
+    note: string,
+    stepIndex: number
+  ): void {
+    const existingNote = this.findPianoNoteAt(trackId, note, stepIndex);
+
+    if (this.paintValue === false) {
+      if (!existingNote) {
+        return;
+      }
+
+      this.projectState.removePianoNoteAt(
+        trackId,
+        note,
+        existingNote.anchorStep
+      );
+
+      return;
+    }
+
+    if (existingNote) {
+      return;
+    }
+
+    this.projectState.setPianoStep(
+      trackId,
+      note,
+      stepIndex,
+      true
+    );
+  }
+
+  private findPianoNoteAt(
+    trackId: TrackType,
+    note: string,
+    stepIndex: number
+  ): { anchorStep: number; duration: number } | null {
+    const track = this.project().tracks.find(
+      projectTrack => projectTrack.id === trackId
+    );
+
+    if (!track || track.kind !== 'piano') {
+      return null;
+    }
+
+    const noteRow = track.notes.find(row => row.note === note);
+
+    if (!noteRow) {
+      return null;
+    }
+
+    for (let index = stepIndex; index >= 0; index--) {
+      const step = noteRow.steps[index];
+
+      if (!step?.active) {
+        continue;
+      }
+
+      const duration = Math.max(1, step.duration ?? 1);
+
+      if (stepIndex >= index && stepIndex < index + duration) {
+        return {
+          anchorStep: index,
+          duration
+        };
+      }
+    }
+
+    return null;
+  }
+
+  private getStepIndexFromPointer(
+    event: PointerEvent,
+    rowElement: HTMLElement
+  ): number {
+    const stepButtons = Array.from(
+      rowElement.querySelectorAll<HTMLButtonElement>('.step--piano')
+    );
+
+    if (stepButtons.length === 0) {
+      return 0;
+    }
+
+    let closestIndex = 0;
+    let closestDistance = Number.POSITIVE_INFINITY;
+
+    stepButtons.forEach((button, index) => {
+      const rect = button.getBoundingClientRect();
+      const center = rect.left + rect.width / 2;
+      const distance = Math.abs(event.clientX - center);
+
+      if (distance < closestDistance) {
+        closestDistance = distance;
+        closestIndex = index;
+      }
+    });
+
+    return Math.max(0, Math.min(15, closestIndex));
   }
 
   private refreshSavedProjects(): void {

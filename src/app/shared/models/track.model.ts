@@ -8,6 +8,7 @@ export type DrumSound = 'kick' | 'snare' | 'hihat';
 
 export interface PianoRollCell {
   active: boolean;
+  duration?: number;
 }
 
 export interface PianoRollRow {

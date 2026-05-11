@@ -259,45 +259,6 @@ export class ProjectStateService {
     }));
   }
 
-  togglePianoStep(
-    trackId: TrackType,
-    note: string,
-    stepIndex: number
-  ): void {
-    this.project.update(project => ({
-      ...project,
-      updatedAt: new Date().toISOString(),
-      tracks: project.tracks.map(track => {
-        if (track.kind !== 'piano' || track.id !== trackId) {
-          return track;
-        }
-
-        return {
-          ...track,
-          notes: track.notes.map(noteRow => {
-            if (noteRow.note !== note) {
-              return noteRow;
-            }
-
-            return {
-              ...noteRow,
-              steps: noteRow.steps.map((step, index) => {
-                if (index !== stepIndex) {
-                  return step;
-                }
-
-                return {
-                  ...step,
-                  active: !step.active
-                };
-              })
-            };
-          })
-        };
-      })
-    }));
-  }
-
   setPianoStep(
     trackId: TrackType,
     note: string,
@@ -319,17 +280,113 @@ export class ProjectStateService {
               return noteRow;
             }
 
+            if (!active) {
+              const anchorIndex = this.findPianoAnchorAt(
+                noteRow.steps,
+                stepIndex
+              );
+
+              if (anchorIndex === -1) {
+                return noteRow;
+              }
+
+              return {
+                ...noteRow,
+                steps: noteRow.steps.map((step, index) =>
+                  index === anchorIndex
+                    ? {
+                        active: false
+                      }
+                    : step
+                )
+              };
+            }
+
+            const existingAnchor = this.findPianoAnchorAt(
+              noteRow.steps,
+              stepIndex
+            );
+
+            if (existingAnchor !== -1) {
+              return noteRow;
+            }
+
+            return {
+              ...noteRow,
+              steps: noteRow.steps.map((step, index) =>
+                index === stepIndex
+                  ? {
+                      active: true,
+                      duration: 1
+                    }
+                  : step
+              )
+            };
+          })
+        };
+      })
+    }));
+  }
+
+  removePianoNoteAt(
+    trackId: TrackType,
+    note: string,
+    stepIndex: number
+  ): void {
+    this.setPianoStep(trackId, note, stepIndex, false);
+  }
+
+  setPianoStepDuration(
+    trackId: TrackType,
+    note: string,
+    stepIndex: number,
+    duration: number
+  ): void {
+    this.project.update(project => ({
+      ...project,
+      updatedAt: new Date().toISOString(),
+      tracks: project.tracks.map(track => {
+        if (track.kind !== 'piano' || track.id !== trackId) {
+          return track;
+        }
+
+        return {
+          ...track,
+          notes: track.notes.map(noteRow => {
+            if (noteRow.note !== note) {
+              return noteRow;
+            }
+
+            const maxDuration = this.getMaxPianoDurationFromStep(
+              noteRow.steps,
+              stepIndex
+            );
+
+            const safeDuration = Math.max(
+              1,
+              Math.min(duration, maxDuration)
+            );
+
             return {
               ...noteRow,
               steps: noteRow.steps.map((step, index) => {
-                if (index !== stepIndex) {
-                  return step;
+                if (index === stepIndex) {
+                  return {
+                    active: true,
+                    duration: safeDuration
+                  };
                 }
 
-                return {
-                  ...step,
-                  active
-                };
+                const isInsideHeldNote =
+                  index > stepIndex && index < stepIndex + safeDuration;
+
+                if (isInsideHeldNote) {
+                  return {
+                    active: false
+                  };
+                }
+
+                return step;
               })
             };
           })
@@ -503,9 +560,28 @@ export class ProjectStateService {
   private normalizeSteps(steps: PianoRollCell[] | undefined): PianoRollCell[] {
     const safeSteps = Array.isArray(steps) ? steps : [];
 
-    return Array.from({ length: this.numberOfSteps }, (_, index) => ({
-      active: safeSteps[index]?.active ?? false
-    }));
+    return Array.from({ length: this.numberOfSteps }, (_, index) => {
+      const step = safeSteps[index];
+
+      if (!step?.active) {
+        return {
+          active: false
+        };
+      }
+
+      const maxDuration = this.getMaxPianoDurationFromStep(
+        safeSteps,
+        index
+      );
+
+      return {
+        active: true,
+        duration: Math.max(
+          1,
+          Math.min(step.duration ?? 1, maxDuration)
+        )
+      };
+    });
   }
 
   private clearTrackPattern(track: Track): Track {
@@ -526,6 +602,42 @@ export class ProjectStateService {
         steps: this.createEmptySteps()
       }))
     };
+  }
+
+  private findPianoAnchorAt(
+    steps: PianoRollCell[],
+    stepIndex: number
+  ): number {
+    for (let index = stepIndex; index >= 0; index--) {
+      const step = steps[index];
+
+      if (!step?.active) {
+        continue;
+      }
+
+      const duration = Math.max(1, step.duration ?? 1);
+
+      if (stepIndex >= index && stepIndex < index + duration) {
+        return index;
+      }
+    }
+
+    return -1;
+  }
+
+  private getMaxPianoDurationFromStep(
+    steps: PianoRollCell[],
+    stepIndex: number
+  ): number {
+    const nextActiveIndex = steps.findIndex((step, index) =>
+      index > stepIndex && step.active
+    );
+
+    if (nextActiveIndex === -1) {
+      return this.numberOfSteps - stepIndex;
+    }
+
+    return Math.max(1, nextActiveIndex - stepIndex);
   }
 
   private createId(): string {

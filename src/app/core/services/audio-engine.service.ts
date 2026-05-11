@@ -165,7 +165,7 @@ export class AudioEngineService {
     stepIndex: number,
     time: number
   ): void {
-    if (!this.synths) {
+    if (!this.synths || !this.Tone) {
       return;
     }
 
@@ -178,21 +178,29 @@ export class AudioEngineService {
 
     synth.volume.value = this.mapVolumeToDecibels(track.volume);
 
-    const activeNotes = track.notes
-      .filter(noteRow => noteRow.steps[stepIndex]?.active)
-      .map(noteRow => noteRow.note);
+    const activeNoteRows = track.notes.filter(
+      noteRow => noteRow.steps[stepIndex]?.active
+    );
 
-    if (activeNotes.length === 0) {
+    if (activeNoteRows.length === 0) {
       return;
     }
 
-    if (track.id === 'harmony') {
-      synth.triggerAttackRelease(activeNotes, '8n', time);
-      return;
-    }
+    activeNoteRows.forEach(noteRow => {
+      const step = noteRow.steps[stepIndex];
+      const durationInSteps = Math.max(1, step.duration ?? 1);
 
-    activeNotes.forEach(note => {
-      synth.triggerAttackRelease(note, '8n', time);
+      const baseDuration = this.Tone.Time('8n').toSeconds();
+      const extraDuration =
+        this.Tone.Time('16n').toSeconds() * Math.max(0, durationInSteps - 1);
+
+      const durationInSeconds = baseDuration + extraDuration;
+
+      synth.triggerAttackRelease(
+        noteRow.note,
+        durationInSeconds,
+        time
+      );
     });
   }
 

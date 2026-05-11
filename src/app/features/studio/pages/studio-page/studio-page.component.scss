@@ -337,6 +337,10 @@
   align-items: center;
 }
 
+.roll-row--piano {
+  position: relative;
+}
+
 .roll-label {
   width: 5rem;
   font-weight: 700;
@@ -394,6 +398,46 @@
 
 .step--active.step--playing::after {
   background: rgba(255, 255, 255, 0.35);
+}
+
+.piano-roll--modal .step--piano.step--active {
+  background: #f6fbfa;
+  border-color: #8bc9c2;
+}
+
+.piano-roll--modal .step--piano.step--playing {
+  z-index: 5;
+}
+
+.piano-note-bar {
+  position: absolute;
+  top: 0;
+  height: 1.35rem;
+  border: 2px solid #d86c9d;
+  border-radius: 0.35rem;
+  background: #ef9fc3;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.35),
+    0 0 0 1px rgba(216, 108, 157, 0.18);
+  pointer-events: none;
+  z-index: 4;
+}
+
+.piano-note-bar--sharp {
+  border-color: #8bc9c2;
+  background: #8bc9c2;
+}
+
+.piano-note-bar::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-radius: 999px;
+  background: rgba(36, 82, 77, 0.45);
+  transform: translateY(-50%);
 }
 
 .track-card__footer {
@@ -610,6 +654,7 @@
   overflow-x: hidden;
   gap: 0.25rem;
   padding-right: 0.5rem;
+  user-select: none;
 }
 
 .piano-roll--modal .step {
