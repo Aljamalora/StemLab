@@ -56,15 +56,15 @@ b {
 }
 
 .header-row {
-  padding-inline: 1.75rem;
+  padding-inline: 1.35rem;
 }
 
 .header-row--top {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
-  min-height: 5rem;
+  gap: 1.25rem;
+  min-height: 4.7rem;
   border-bottom: 1px solid var(--line);
 }
 
@@ -79,15 +79,15 @@ b {
 .song-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.8rem;
 }
 
 .song-name-field input {
   width: 16rem;
-  height: 2.8rem;
-  padding: 0 1rem;
+  height: 2.65rem;
+  padding: 0 0.9rem;
   border: 2px solid var(--line);
-  border-radius: 0.5rem;
+  border-radius: 0.35rem;
   background: white;
   color: var(--text-dark);
   font-size: 1rem;
@@ -103,7 +103,7 @@ b {
 .song-actions {
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .icon-button,
@@ -126,10 +126,10 @@ b {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.55rem;
-  height: 2.55rem;
+  width: 2.45rem;
+  height: 2.45rem;
   border: 0;
-  border-radius: 0.55rem;
+  border-radius: 0.35rem;
   background: transparent;
   color: var(--text);
   cursor: pointer;
@@ -152,7 +152,6 @@ b {
 }
 
 .icon-button svg,
-.transport-button svg,
 .track-action svg,
 .track-volume svg {
   width: 1.35rem;
@@ -164,22 +163,32 @@ b {
   stroke-linejoin: round;
 }
 
+.transport-button svg {
+  width: 1.65rem;
+  height: 1.65rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 .header-row--middle {
   display: flex;
   align-items: center;
-  min-height: 4.4rem;
+  min-height: 4.15rem;
   border-bottom: 1px solid var(--line);
 }
 
 .transport-bar {
   display: flex;
   align-items: center;
-  gap: 0.9rem;
+  gap: 0.75rem;
 }
 
 .icon-button--transport {
-  width: 2.7rem;
-  height: 2.7rem;
+  width: 2.65rem;
+  height: 2.65rem;
 }
 
 .icon-button--active {
@@ -191,7 +200,7 @@ b {
 .bpm-inline {
   display: inline-flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
 }
 
 .bpm-inline span {
@@ -202,10 +211,10 @@ b {
 
 .bpm-inline input {
   width: 5rem;
-  height: 2.65rem;
-  padding: 0 0.85rem;
+  height: 2.55rem;
+  padding: 0 0.8rem;
   border: 2px solid var(--line);
-  border-radius: 0.5rem;
+  border-radius: 0.35rem;
   background: white;
   color: var(--text-dark);
   font-size: 1rem;
@@ -222,8 +231,8 @@ b {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.8rem;
-  height: 2.8rem;
+  width: 2.85rem;
+  height: 2.85rem;
   border: 0;
   border-radius: 999px;
   background: transparent;
@@ -238,8 +247,8 @@ b {
 
 .transport-button--stop .stop-indicator {
   display: block;
-  width: 1.15rem;
-  height: 1.15rem;
+  width: 1.2rem;
+  height: 1.2rem;
   border: 2px solid currentColor;
   border-radius: 999px;
   background: transparent;
@@ -251,8 +260,8 @@ b {
 }
 
 .header-row--bottom {
-  padding-top: 0.75rem;
-  padding-bottom: 0.75rem;
+  padding-top: 0.65rem;
+  padding-bottom: 0.65rem;
   overflow-x: auto;
 }
 
@@ -282,24 +291,24 @@ b {
 .timeline-header__step--playing {
   color: white;
   background: var(--teal-dark);
-  border-radius: 0.35rem;
+  border-radius: 0.25rem;
 }
 
 /* Tracks */
 
 .tracks {
   display: grid;
-  gap: 1.25rem;
-  padding: 1.75rem;
-  padding-top: 12.4rem;
+  gap: 0.85rem;
+  padding: 1rem;
+  padding-top: 11.6rem;
 }
 
 .track-card {
   background: var(--panel);
   border: 2px solid var(--line);
-  border-radius: 1rem;
+  border-radius: 0.55rem;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(36, 82, 77, 0.08);
+  box-shadow: 0 8px 24px rgba(36, 82, 77, 0.07);
 }
 
 .track-shell {
@@ -311,9 +320,9 @@ b {
 .track-side {
   display: flex;
   flex-direction: column;
-  gap: 0.95rem;
+  gap: 0.75rem;
   min-height: 10.5rem;
-  padding: 1.15rem 1.2rem;
+  padding: 0.9rem 1rem;
   border-right: 2px solid var(--line);
   background: white;
 }
@@ -326,16 +335,16 @@ b {
   border-radius: 0;
   background: transparent;
   color: var(--text);
-  font-size: 1.35rem;
+  font-size: 1.32rem;
   font-weight: 400;
 }
 
 .track-select select {
   width: 100%;
-  height: 2.65rem;
-  padding: 0 0.75rem;
+  height: 2.55rem;
+  padding: 0 0.7rem;
   border: 2px solid var(--line);
-  border-radius: 0.5rem;
+  border-radius: 0.35rem;
   background: white;
   color: var(--text);
   font-size: 0.95rem;
@@ -353,7 +362,7 @@ b {
   display: grid;
   grid-template-columns: 1.35rem 1fr;
   align-items: center;
-  gap: 0.75rem;
+  gap: 0.65rem;
   color: var(--text);
 }
 
@@ -365,7 +374,7 @@ b {
 .track-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 0.55rem;
+  gap: 0.45rem;
   margin-top: auto;
 }
 
@@ -373,10 +382,10 @@ b {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2rem;
-  height: 2rem;
+  width: 1.95rem;
+  height: 1.95rem;
   border: 2px solid transparent;
-  border-radius: 0.5rem;
+  border-radius: 0.35rem;
   background: transparent;
   color: var(--text);
   cursor: pointer;
@@ -404,7 +413,7 @@ b {
 .track-main {
   display: flex;
   min-height: 10.5rem;
-  padding: 1.15rem 1.2rem;
+  padding: 0.65rem 0.9rem 0.65rem 0;
 }
 
 .preview-button {
@@ -446,9 +455,9 @@ b {
   position: relative;
   grid-column: 2 / span 16;
   height: 100%;
-  min-height: 8.25rem;
+  min-height: 9.2rem;
   border: 2px solid var(--line);
-  border-radius: 0.75rem;
+  border-radius: 0.45rem;
   overflow: hidden;
   background: white;
   background-image:
@@ -482,7 +491,7 @@ b {
   position: absolute;
   display: block;
   min-height: 5px;
-  border-radius: 0.35rem;
+  border-radius: 0.3rem;
   background: var(--pink);
   border: 1px solid var(--pink-strong);
   z-index: 2;
@@ -509,6 +518,7 @@ b {
   gap: var(--step-gap);
   min-width: max-content;
   width: 100%;
+  align-content: center;
 }
 
 .roll-row {
@@ -530,6 +540,10 @@ b {
   font-weight: 400;
 }
 
+.roll-row--piano .roll-label {
+  width: 5rem;
+}
+
 .roll-label--sharp {
   color: var(--pink-strong);
 }
@@ -539,7 +553,7 @@ b {
   width: var(--step-width);
   height: 2.25rem;
   border: 2px solid var(--line);
-  border-radius: 0.5rem;
+  border-radius: 0.35rem;
   background: var(--panel-soft);
   cursor: pointer;
   user-select: none;
@@ -592,7 +606,7 @@ b {
 .timeline__step--playing {
   color: white;
   background: var(--teal-dark);
-  border-radius: 0.35rem;
+  border-radius: 0.25rem;
 }
 
 /* Piano roll */
@@ -613,7 +627,7 @@ b {
   top: 0;
   height: 2.25rem;
   border: 2px solid var(--pink-strong);
-  border-radius: 0.5rem;
+  border-radius: 0.35rem;
   background: var(--pink);
   pointer-events: none;
   z-index: 3;
@@ -634,7 +648,7 @@ b {
 .small-button {
   padding: 0.55rem 0.9rem;
   border: 2px solid var(--line-strong);
-  border-radius: 0.6rem;
+  border-radius: 0.35rem;
   background: white;
   color: var(--text);
   font-weight: 400;
@@ -683,7 +697,7 @@ b {
   max-height: 86vh;
   overflow: auto;
   padding: 1rem;
-  border-radius: 1rem;
+  border-radius: 0.65rem;
   background: white;
   box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
 }
@@ -733,11 +747,12 @@ b {
 
 .piano-roll--modal .step {
   height: 1.35rem;
-  border-radius: 0.35rem;
+  border-radius: 0.25rem;
 }
 
 .piano-roll--modal .piano-note-bar {
   height: 1.35rem;
+  border-radius: 0.25rem;
 }
 
 .roll-editor-panel__footer {
@@ -774,7 +789,7 @@ b {
 .empty-saves {
   padding: 2rem;
   border: 2px dashed var(--line-strong);
-  border-radius: 0.75rem;
+  border-radius: 0.55rem;
   text-align: center;
   color: var(--muted);
   background: var(--panel-soft);
@@ -793,7 +808,7 @@ b {
   width: 100%;
   padding: 1rem;
   border: 2px solid var(--line);
-  border-radius: 0.75rem;
+  border-radius: 0.55rem;
   background: var(--panel-soft);
   color: var(--text);
   text-align: left;
@@ -843,7 +858,7 @@ b {
   align-items: center;
   justify-content: center;
   padding: 0.4rem 0.6rem;
-  border-radius: 0.45rem;
+  border-radius: 0.35rem;
   background: white;
   color: var(--danger);
   font-size: 0.85rem;
@@ -864,7 +879,7 @@ b {
 .danger-button {
   padding: 0.65rem 1rem;
   border: 0;
-  border-radius: 0.55rem;
+  border-radius: 0.35rem;
   background: #fee4e2;
   color: var(--danger);
   font-weight: 400;
@@ -902,9 +917,9 @@ b {
   }
 
   .tracks {
-  padding: 1rem;
-  padding-top: 15.5rem;
-}
+    padding: 1rem;
+    padding-top: 15rem;
+  }
 
   .track-shell {
     grid-template-columns: 1fr;
@@ -917,6 +932,7 @@ b {
 
   .track-main {
     min-height: 9rem;
+    padding: 0.65rem 0.75rem 0.65rem 0;
   }
 
   .timeline-header {
