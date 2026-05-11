@@ -2,6 +2,8 @@ export type TrackType = 'melody' | 'harmony' | 'bass' | 'drums';
 
 export type PianoTrackType = Exclude<TrackType, 'drums'>;
 
+export type PianoInstrumentPreset = 'default' | 'soft' | 'bright';
+
 export type DrumSound = 'kick' | 'snare' | 'hihat';
 
 export interface PianoRollCell {
@@ -31,6 +33,7 @@ export interface BaseTrack {
 export interface PianoTrack extends BaseTrack {
   id: PianoTrackType;
   kind: 'piano';
+  instrumentPreset: PianoInstrumentPreset;
   notes: PianoRollRow[];
 }
 

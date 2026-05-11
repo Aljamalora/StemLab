@@ -4,6 +4,7 @@ import { StemlabProject } from '../../shared/models/stemlab-project.model';
 import {
   DrumSound,
   DrumTrack,
+  PianoInstrumentPreset,
   PianoTrack,
   PianoTrackType
 } from '../../shared/models/track.model';
@@ -21,7 +22,7 @@ export class AudioEngineService {
 
   private Tone: any = null;
 
-  private synths: Record<PianoTrackType, any> | null = null;
+  private synths: Record<PianoTrackType, Record<PianoInstrumentPreset, any>> | null = null;
 
   private drums: Record<DrumSound, any> | null = null;
 
@@ -168,7 +169,8 @@ export class AudioEngineService {
       return;
     }
 
-    const synth = this.synths[track.id];
+    const instrumentPreset = track.instrumentPreset ?? 'default';
+    const synth = this.synths[track.id]?.[instrumentPreset];
 
     if (!synth) {
       return;
@@ -243,19 +245,131 @@ export class AudioEngineService {
     await this.Tone.start();
 
     this.synths = {
-      melody: new this.Tone.Synth({
-        oscillator: {
-          type: 'sine'
-        }
-      }).toDestination(),
+      melody: {
+        default: new this.Tone.Synth({
+          oscillator: {
+            type: 'sine'
+          },
+          envelope: {
+            attack: 0.01,
+            decay: 0.15,
+            sustain: 0.4,
+            release: 0.25
+          }
+        }).toDestination(),
 
-      harmony: new this.Tone.PolySynth(this.Tone.Synth).toDestination(),
+        soft: new this.Tone.Synth({
+          oscillator: {
+            type: 'triangle'
+          },
+          envelope: {
+            attack: 0.04,
+            decay: 0.2,
+            sustain: 0.35,
+            release: 0.45
+          }
+        }).toDestination(),
 
-      bass: new this.Tone.Synth({
-        oscillator: {
-          type: 'square'
-        }
-      }).toDestination()
+        bright: new this.Tone.FMSynth({
+          harmonicity: 2,
+          modulationIndex: 8,
+          envelope: {
+            attack: 0.005,
+            decay: 0.12,
+            sustain: 0.25,
+            release: 0.2
+          }
+        }).toDestination()
+      },
+
+      harmony: {
+        default: new this.Tone.PolySynth(this.Tone.Synth, {
+          oscillator: {
+            type: 'sine'
+          },
+          envelope: {
+            attack: 0.03,
+            decay: 0.2,
+            sustain: 0.45,
+            release: 0.55
+          }
+        }).toDestination(),
+
+        soft: new this.Tone.PolySynth(this.Tone.Synth, {
+          oscillator: {
+            type: 'triangle'
+          },
+          envelope: {
+            attack: 0.08,
+            decay: 0.3,
+            sustain: 0.5,
+            release: 0.8
+          }
+        }).toDestination(),
+
+        bright: new this.Tone.PolySynth(this.Tone.Synth, {
+          oscillator: {
+            type: 'square'
+          },
+          envelope: {
+            attack: 0.01,
+            decay: 0.16,
+            sustain: 0.35,
+            release: 0.35
+          }
+        }).toDestination()
+      },
+
+      bass: {
+        default: new this.Tone.Synth({
+          oscillator: {
+            type: 'square'
+          },
+          envelope: {
+            attack: 0.01,
+            decay: 0.2,
+            sustain: 0.45,
+            release: 0.25
+          }
+        }).toDestination(),
+
+        soft: new this.Tone.Synth({
+          oscillator: {
+            type: 'sine'
+          },
+          envelope: {
+            attack: 0.02,
+            decay: 0.25,
+            sustain: 0.5,
+            release: 0.35
+          }
+        }).toDestination(),
+
+        bright: new this.Tone.MonoSynth({
+          oscillator: {
+            type: 'sawtooth'
+          },
+          filter: {
+            Q: 2,
+            type: 'lowpass',
+            rolloff: -24
+          },
+          envelope: {
+            attack: 0.01,
+            decay: 0.18,
+            sustain: 0.4,
+            release: 0.25
+          },
+          filterEnvelope: {
+            attack: 0.01,
+            decay: 0.1,
+            sustain: 0.2,
+            release: 0.2,
+            baseFrequency: 80,
+            octaves: 2.5
+          }
+        }).toDestination()
+      }
     };
 
     this.drums = {

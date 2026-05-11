@@ -226,8 +226,6 @@
   border-color: #8bc9c2;
 }
 
-/* Preview comprimido de pistas con piano roll */
-
 .compressed-track-preview {
   padding: 1rem;
   border: 2px dashed #8bc9c2;
@@ -326,8 +324,6 @@
   box-shadow: 0 0 0 1px rgba(36, 82, 77, 0.18);
 }
 
-/* Rolls */
-
 .piano-roll,
 .drum-roll {
   display: grid;
@@ -401,9 +397,30 @@
 }
 
 .track-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
   margin-top: 1rem;
   padding-top: 1rem;
   border-top: 1px solid #dbece9;
+}
+
+.instrument-control {
+  display: grid;
+  grid-template-columns: 6rem minmax(12rem, 18rem);
+  gap: 1rem;
+  align-items: center;
+  font-weight: 700;
+
+  select {
+    padding: 0.45rem 0.6rem;
+    border: 2px solid #8bc9c2;
+    border-radius: 0.5rem;
+    background: white;
+    color: #24524d;
+    font-weight: 700;
+  }
 }
 
 .volume-control {
@@ -414,8 +431,6 @@
   font-weight: 700;
 }
 
-/* Modal base */
-
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -425,8 +440,6 @@
   padding: 1rem;
   background: rgba(18, 35, 33, 0.55);
 }
-
-/* Modal de cargar canciones */
 
 .load-panel {
   width: min(42rem, 100%);
@@ -550,8 +563,6 @@
   cursor: pointer;
 }
 
-/* Modal editor de piano roll */
-
 .roll-editor-backdrop {
   z-index: 30;
 }
@@ -592,13 +603,6 @@
   overflow-x: auto;
 }
 
-/*
-  Piano roll del modal:
-  - Muestra muchas notas cromáticas.
-  - Tiene scroll vertical propio.
-  - Las celdas son más bajas para ocupar menos.
-*/
-
 .piano-roll--modal {
   min-width: max-content;
   max-height: 24rem;
@@ -628,13 +632,18 @@
   border-top: 1px solid #dbece9;
 }
 
+.roll-editor-panel__controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 1rem;
+}
+
 .roll-editor-panel__actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
 }
-
-/* Responsive */
 
 @media (max-width: 760px) {
   .studio {

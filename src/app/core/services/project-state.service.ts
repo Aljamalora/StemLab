@@ -4,6 +4,7 @@ import {
   DrumRow,
   DrumSound,
   DrumTrack,
+  PianoInstrumentPreset,
   PianoRollCell,
   PianoTrack,
   PianoTrackType,
@@ -32,7 +33,7 @@ export class ProjectStateService {
         this.createPianoTrack(
           'melody',
           'Melodía',
-          this.createChromaticRange('C6', 'C2')
+          this.createChromaticRange('C5', 'C2')
         ),
         this.createPianoTrack(
           'harmony',
@@ -61,6 +62,7 @@ export class ProjectStateService {
       volume: 0.8,
       muted: false,
       solo: false,
+      instrumentPreset: 'default',
       notes: notes.map(note => ({
         note,
         label: note,
@@ -181,6 +183,79 @@ export class ProjectStateService {
       ...project,
       name,
       updatedAt: new Date().toISOString()
+    }));
+  }
+
+  setBpm(bpm: number): void {
+    this.project.update(project => ({
+      ...project,
+      bpm,
+      updatedAt: new Date().toISOString()
+    }));
+  }
+
+  setTrackVolume(trackId: TrackType, volume: number): void {
+    this.project.update(project => ({
+      ...project,
+      updatedAt: new Date().toISOString(),
+      tracks: project.tracks.map(track =>
+        track.id === trackId
+          ? {
+              ...track,
+              volume
+            }
+          : track
+      )
+    }));
+  }
+
+  setPianoTrackInstrument(
+    trackId: PianoTrackType,
+    instrumentPreset: PianoInstrumentPreset
+  ): void {
+    this.project.update(project => ({
+      ...project,
+      updatedAt: new Date().toISOString(),
+      tracks: project.tracks.map(track => {
+        if (track.kind !== 'piano' || track.id !== trackId) {
+          return track;
+        }
+
+        return {
+          ...track,
+          instrumentPreset
+        };
+      })
+    }));
+  }
+
+  toggleMute(trackId: TrackType): void {
+    this.project.update(project => ({
+      ...project,
+      updatedAt: new Date().toISOString(),
+      tracks: project.tracks.map(track =>
+        track.id === trackId
+          ? {
+              ...track,
+              muted: !track.muted
+            }
+          : track
+      )
+    }));
+  }
+
+  toggleSolo(trackId: TrackType): void {
+    this.project.update(project => ({
+      ...project,
+      updatedAt: new Date().toISOString(),
+      tracks: project.tracks.map(track =>
+        track.id === trackId
+          ? {
+              ...track,
+              solo: !track.solo
+            }
+          : track
+      )
     }));
   }
 
@@ -337,59 +412,6 @@ export class ProjectStateService {
     }));
   }
 
-  setBpm(bpm: number): void {
-    this.project.update(project => ({
-      ...project,
-      bpm,
-      updatedAt: new Date().toISOString()
-    }));
-  }
-
-  setTrackVolume(trackId: TrackType, volume: number): void {
-    this.project.update(project => ({
-      ...project,
-      updatedAt: new Date().toISOString(),
-      tracks: project.tracks.map(track =>
-        track.id === trackId
-          ? {
-              ...track,
-              volume
-            }
-          : track
-      )
-    }));
-  }
-
-  toggleMute(trackId: TrackType): void {
-    this.project.update(project => ({
-      ...project,
-      updatedAt: new Date().toISOString(),
-      tracks: project.tracks.map(track =>
-        track.id === trackId
-          ? {
-              ...track,
-              muted: !track.muted
-            }
-          : track
-      )
-    }));
-  }
-
-  toggleSolo(trackId: TrackType): void {
-    this.project.update(project => ({
-      ...project,
-      updatedAt: new Date().toISOString(),
-      tracks: project.tracks.map(track =>
-        track.id === trackId
-          ? {
-              ...track,
-              solo: !track.solo
-            }
-          : track
-      )
-    }));
-  }
-
   clearTrack(trackId: TrackType): void {
     this.project.update(project => ({
       ...project,
@@ -426,7 +448,8 @@ export class ProjectStateService {
             ...track,
             solo: track.solo ?? false,
             muted: track.muted ?? false,
-            volume: track.volume ?? 0.8
+            volume: track.volume ?? 0.8,
+            instrumentPreset: track.instrumentPreset ?? 'default'
           });
         }
 

@@ -3,7 +3,13 @@ import { AudioEngineService } from '../../../../core/services/audio-engine.servi
 import { ProjectStateService } from '../../../../core/services/project-state.service';
 import { StorageService } from '../../../../core/services/storage.service';
 import { StemlabProject } from '../../../../shared/models/stemlab-project.model';
-import { DrumSound, PianoTrack, PianoTrackType, TrackType } from '../../../../shared/models/track.model';
+import {
+  DrumSound,
+  PianoInstrumentPreset,
+  PianoTrack,
+  PianoTrackType,
+  TrackType
+} from '../../../../shared/models/track.model';
 
 @Component({
   selector: 'app-studio-page',
@@ -25,34 +31,85 @@ export class StudioPageComponent {
 
   readonly savedProjects = signal<StemlabProject[]>([]);
   readonly isLoadPanelOpen = signal<boolean>(false);
+
   readonly selectedPianoTrackId = signal<PianoTrackType | null>(null);
 
-readonly selectedPianoTrack = computed<PianoTrack | null>(() => {
-  const selectedTrackId = this.selectedPianoTrackId();
+  readonly selectedPianoTrack = computed<PianoTrack | null>(() => {
+    const selectedTrackId = this.selectedPianoTrackId();
 
-  if (!selectedTrackId) {
-    return null;
-  }
+    if (!selectedTrackId) {
+      return null;
+    }
 
-  const selectedTrack = this.project().tracks.find(
-    track => track.id === selectedTrackId
+    const selectedTrack = this.project().tracks.find(
+      track => track.id === selectedTrackId
+    );
+
+    if (!selectedTrack || selectedTrack.kind !== 'piano') {
+      return null;
+    }
+
+    return selectedTrack;
+  });
+
+  readonly stepNumbers = computed(() =>
+    Array.from({ length: 16 }, (_, index) => index + 1)
   );
 
-  if (!selectedTrack || selectedTrack.kind !== 'piano') {
-    return null;
-  }
+  readonly previewStepWidth = 100 / 16;
 
-  return selectedTrack;
-});
+  readonly pianoInstrumentOptions: Record<
+    PianoTrackType,
+    Array<{ value: PianoInstrumentPreset; label: string }>
+  > = {
+    melody: [
+      {
+        value: 'default',
+        label: 'Melodía limpia'
+      },
+      {
+        value: 'soft',
+        label: 'Melodía suave'
+      },
+      {
+        value: 'bright',
+        label: 'Melodía brillante'
+      }
+    ],
+
+    harmony: [
+      {
+        value: 'default',
+        label: 'Armonía limpia'
+      },
+      {
+        value: 'soft',
+        label: 'Armonía cálida'
+      },
+      {
+        value: 'bright',
+        label: 'Armonía brillante'
+      }
+    ],
+
+    bass: [
+      {
+        value: 'default',
+        label: 'Bajo clásico'
+      },
+      {
+        value: 'soft',
+        label: 'Bajo redondo'
+      },
+      {
+        value: 'bright',
+        label: 'Bajo agresivo'
+      }
+    ]
+  };
 
   private isPainting = false;
   private paintValue: boolean | null = null;
-
-  readonly stepNumbers = computed(() =>
-  Array.from({ length: 16 }, (_, index) => index + 1)
-);
-
-readonly previewStepWidth = 100 / 16;
 
   @HostListener('document:pointerup')
   @HostListener('document:pointercancel')
@@ -85,6 +142,7 @@ readonly previewStepWidth = 100 / 16;
     this.audioEngine.stop();
     this.projectState.newProject();
     this.closeLoadPanel();
+    this.closePianoRollEditor();
   }
 
   save(): void {
@@ -103,6 +161,7 @@ readonly previewStepWidth = 100 / 16;
 
   openLoadPanel(): void {
     this.audioEngine.stop();
+    this.closePianoRollEditor();
     this.refreshSavedProjects();
     this.isLoadPanelOpen.set(true);
   }
@@ -123,6 +182,7 @@ readonly previewStepWidth = 100 / 16;
     this.audioEngine.stop();
     this.projectState.setProject(savedProject);
     this.closeLoadPanel();
+    this.closePianoRollEditor();
   }
 
   deleteSavedProject(projectId: string, event: MouseEvent): void {
@@ -157,6 +217,15 @@ readonly previewStepWidth = 100 / 16;
 
     this.storage.deleteAllProjects();
     this.refreshSavedProjects();
+  }
+
+  openPianoRollEditor(trackId: PianoTrackType): void {
+    this.closeLoadPanel();
+    this.selectedPianoTrackId.set(trackId);
+  }
+
+  closePianoRollEditor(): void {
+    this.selectedPianoTrackId.set(null);
   }
 
   startPaintingPianoStep(
@@ -258,79 +327,85 @@ readonly previewStepWidth = 100 / 16;
     this.projectState.setTrackVolume(trackId, volume);
   }
 
+  changePianoInstrument(
+    trackId: PianoTrackType,
+    event: Event
+  ): void {
+    const select = event.target as HTMLSelectElement;
+    const instrumentPreset = select.value as PianoInstrumentPreset;
+
+    this.projectState.setPianoTrackInstrument(trackId, instrumentPreset);
+  }
+
+  getInstrumentOptions(
+    trackId: PianoTrackType
+  ): Array<{ value: PianoInstrumentPreset; label: string }> {
+    return this.pianoInstrumentOptions[trackId];
+  }
+
   toggleMute(trackId: TrackType): void {
     this.projectState.toggleMute(trackId);
   }
 
   toggleSolo(trackId: TrackType): void {
-  this.projectState.toggleSolo(trackId);
+    this.projectState.toggleSolo(trackId);
   }
 
   toggleMetronome(): void {
-  this.audioEngine.toggleMetronome();
+    this.audioEngine.toggleMetronome();
   }
-
-  openPianoRollEditor(trackId: PianoTrackType): void {
-  this.closeLoadPanel();
-  this.selectedPianoTrackId.set(trackId);
-}
-
-closePianoRollEditor(): void {
-  this.selectedPianoTrackId.set(null);
-}
 
   isCurrentStep(stepIndex: number): boolean {
     return this.currentStep() === stepIndex;
   }
 
-hasActiveNotes(track: PianoTrack): boolean {
-  return track.notes.some(noteRow =>
-    noteRow.steps.some(step => step.active)
-  );
-}
+  hasActiveNotes(track: PianoTrack): boolean {
+    return track.notes.some(noteRow =>
+      noteRow.steps.some(step => step.active)
+    );
+  }
 
-getPreviewNoteBlocks(track: PianoTrack): Array<{
-  id: string;
-  left: number;
-  top: number;
-  width: number;
-  height: number;
-  sharp: boolean;
-}> {
-  const totalRows = track.notes.length;
-  const totalSteps = 16;
-  const rowHeight = 100 / totalRows;
-  const stepWidth = 100 / totalSteps;
-
-  const blocks: Array<{
+  getPreviewNoteBlocks(track: PianoTrack): Array<{
     id: string;
     left: number;
     top: number;
     width: number;
     height: number;
     sharp: boolean;
-  }> = [];
+  }> {
+    const totalRows = track.notes.length;
+    const totalSteps = 16;
+    const rowHeight = 100 / totalRows;
+    const stepWidth = 100 / totalSteps;
 
-  track.notes.forEach((noteRow, rowIndex) => {
-    noteRow.steps.forEach((step, stepIndex) => {
-      if (!step.active) {
-        return;
-      }
+    const blocks: Array<{
+      id: string;
+      left: number;
+      top: number;
+      width: number;
+      height: number;
+      sharp: boolean;
+    }> = [];
 
-      blocks.push({
-        id: `${track.id}-${noteRow.note}-${stepIndex}`,
-        left: stepIndex * stepWidth,
-        top: rowIndex * rowHeight,
-        width: stepWidth,
-        height: rowHeight,
-        sharp: noteRow.label.includes('#')
+    track.notes.forEach((noteRow, rowIndex) => {
+      noteRow.steps.forEach((step, stepIndex) => {
+        if (!step.active) {
+          return;
+        }
+
+        blocks.push({
+          id: `${track.id}-${noteRow.note}-${stepIndex}`,
+          left: stepIndex * stepWidth,
+          top: rowIndex * rowHeight,
+          width: stepWidth,
+          height: rowHeight,
+          sharp: noteRow.label.includes('#')
+        });
       });
     });
-  });
 
-  return blocks;
-}
-
+    return blocks;
+  }
 
   formatDate(date: string): string {
     return new Date(date).toLocaleString('es-ES', {
