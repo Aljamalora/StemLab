@@ -113,7 +113,12 @@ b {
 .small-button,
 .danger-button,
 .saved-song,
-.delete-song {
+.delete-song,
+.sequence-toggle-button,
+.sequence-edit-button,
+.pattern-button,
+.pattern-copy-button,
+.pattern-sequence-item {
   transition:
     background-color 0.18s ease,
     border-color 0.18s ease,
@@ -146,14 +151,20 @@ b {
 .preview-button:focus-visible,
 .small-button:focus-visible,
 .danger-button:focus-visible,
-.saved-song:focus-visible {
+.saved-song:focus-visible,
+.sequence-toggle-button:focus-visible,
+.sequence-edit-button:focus-visible,
+.pattern-button:focus-visible,
+.pattern-copy-button:focus-visible,
+.pattern-sequence-item:focus-visible {
   outline: 3px solid var(--teal-dark);
   outline-offset: 2px;
 }
 
 .icon-button svg,
 .track-action svg,
-.track-volume svg {
+.track-volume svg,
+.master-volume-control svg {
   width: 1.35rem;
   height: 1.35rem;
   fill: none;
@@ -174,8 +185,11 @@ b {
 }
 
 .header-row--middle {
-  display: flex;
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  gap: 1rem;
   min-height: 4.15rem;
   border-bottom: 1px solid var(--line);
 }
@@ -183,6 +197,7 @@ b {
 .transport-bar {
   display: flex;
   align-items: center;
+  justify-self: start;
   gap: 0.75rem;
 }
 
@@ -259,6 +274,90 @@ b {
   border-color: var(--pink-strong);
 }
 
+/* Controles centrales de patrones */
+
+.pattern-center-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  justify-self: center;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.sequence-controls,
+.pattern-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.sequence-toggle-button,
+.sequence-edit-button,
+.pattern-button,
+.pattern-copy-button {
+  height: 2.35rem;
+  border: 2px solid var(--line);
+  border-radius: 0.35rem;
+  background: white;
+  color: var(--text);
+  cursor: pointer;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.sequence-toggle-button,
+.sequence-edit-button,
+.pattern-copy-button {
+  padding: 0 0.75rem;
+}
+
+.pattern-button {
+  min-width: 2.35rem;
+  padding: 0 0.65rem;
+  text-transform: uppercase;
+}
+
+.sequence-toggle-button:hover,
+.sequence-edit-button:hover,
+.pattern-button:hover,
+.pattern-copy-button:hover {
+  border-color: var(--line-strong);
+  background: var(--panel-soft);
+}
+
+.sequence-toggle-button--active,
+.pattern-button--active {
+  background: var(--teal-dark);
+  border-color: var(--teal-dark);
+  color: white;
+}
+
+.current-pattern-badge {
+  padding: 0.45rem 0.65rem;
+  border: 2px solid var(--line);
+  border-radius: 0.35rem;
+  background: var(--panel-soft);
+  color: var(--text);
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.master-volume-control {
+  display: grid;
+  grid-template-columns: 1.35rem 9rem;
+  align-items: center;
+  justify-self: end;
+  gap: 0.65rem;
+  margin-left: auto;
+  color: var(--text);
+}
+
+.master-volume-control input[type='range'] {
+  width: 100%;
+  accent-color: var(--teal);
+}
+
 .header-row--bottom {
   padding-top: 0.65rem;
   padding-bottom: 0.65rem;
@@ -304,11 +403,34 @@ b {
 }
 
 .track-card {
+  --track-color: var(--teal);
+  --track-color-strong: var(--teal-dark);
+
   background: var(--panel);
   border: 2px solid var(--line);
   border-radius: 0.55rem;
   overflow: hidden;
   box-shadow: 0 8px 24px rgba(36, 82, 77, 0.07);
+}
+
+.track-card--melody {
+  --track-color: #f3a2be;
+  --track-color-strong: #d86c9d;
+}
+
+.track-card--harmony {
+  --track-color: #ffd3dd;
+  --track-color-strong: #eaa5b7;
+}
+
+.track-card--bass {
+  --track-color: #c6e6e3;
+  --track-color-strong: #8bc9c2;
+}
+
+.track-card--drums {
+  --track-color: #81bfb7;
+  --track-color-strong: #24524d;
 }
 
 .track-shell {
@@ -368,7 +490,7 @@ b {
 
 .track-volume input[type='range'] {
   width: 100%;
-  accent-color: var(--teal);
+  accent-color: var(--track-color);
 }
 
 .track-actions {
@@ -428,7 +550,7 @@ b {
 }
 
 .preview-button:hover .mini-pattern__canvas {
-  border-color: var(--pink);
+  border-color: var(--track-color-strong);
   background: #fffafd;
 }
 
@@ -492,14 +614,14 @@ b {
   display: block;
   min-height: 5px;
   border-radius: 0.3rem;
-  background: var(--pink);
-  border: 1px solid var(--pink-strong);
+  background: var(--track-color);
+  border: 1px solid var(--track-color-strong);
   z-index: 2;
 }
 
 .mini-pattern__note--sharp {
-  background: var(--teal);
-  border-color: var(--teal-dark);
+  background: var(--track-color);
+  border-color: var(--track-color-strong);
 }
 
 .mini-pattern__hint {
@@ -570,8 +692,8 @@ b {
 }
 
 .step--drum.step--active {
-  background: var(--gold);
-  border-color: var(--gold-strong);
+  background: var(--track-color);
+  border-color: var(--track-color-strong);
 }
 
 .step--playing {
@@ -626,21 +748,43 @@ b {
   position: absolute;
   top: 0;
   height: 2.25rem;
-  border: 2px solid var(--pink-strong);
+  border: 2px solid var(--track-color-strong);
   border-radius: 0.35rem;
-  background: var(--pink);
+  background: var(--track-color);
   pointer-events: none;
   z-index: 3;
   box-sizing: border-box;
 }
 
 .piano-note-bar--sharp {
-  border-color: var(--teal-dark);
-  background: var(--teal);
+  border-color: var(--track-color-strong);
+  background: var(--track-color);
 }
 
 .piano-roll--modal .step--piano.step--playing {
   z-index: 5;
+}
+
+/* Colores del editor */
+
+.roll-editor-panel {
+  --track-color: var(--teal);
+  --track-color-strong: var(--teal-dark);
+}
+
+.roll-editor-panel--melody {
+  --track-color: #f3a2be;
+  --track-color-strong: #d86c9d;
+}
+
+.roll-editor-panel--harmony {
+  --track-color: #ffd3dd;
+  --track-color-strong: #eaa5b7;
+}
+
+.roll-editor-panel--bass {
+  --track-color: #c6e6e3;
+  --track-color-strong: #8bc9c2;
 }
 
 /* Botones pequeños y controles modal */
@@ -784,6 +928,96 @@ b {
   min-width: 12rem;
 }
 
+.roll-editor-panel__footer .volume-control input[type='range'] {
+  accent-color: var(--track-color);
+}
+
+/* Modal de orden de patrones */
+
+.pattern-sequence-panel {
+  width: min(44rem, 100%);
+  max-height: 86vh;
+  overflow: auto;
+  padding: 1rem;
+  border-radius: 0.65rem;
+  background: white;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.25);
+}
+
+.pattern-sequence-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.pattern-sequence-panel__header h2 {
+  margin: 0;
+  font-weight: 400;
+}
+
+.pattern-sequence-panel__header p {
+  margin: 0.25rem 0 0;
+  color: var(--muted);
+}
+
+.pattern-sequence-tray {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 6rem;
+  padding: 1rem;
+  border: 2px dashed var(--line-strong);
+  border-radius: 0.55rem;
+  background: var(--panel-soft);
+}
+
+.pattern-sequence-empty {
+  display: flex;
+  align-items: center;
+  color: var(--muted);
+}
+
+.pattern-sequence-item {
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 2px solid var(--teal-dark);
+  border-radius: 0.35rem;
+  background: white;
+  color: var(--text);
+  cursor: grab;
+}
+
+.pattern-sequence-item:hover {
+  background: var(--panel-soft);
+}
+
+.pattern-sequence-item:active {
+  cursor: grabbing;
+}
+
+.pattern-sequence-add {
+  display: flex;
+  gap: 0.45rem;
+  margin-top: 1rem;
+}
+
+.pattern-sequence-add .pattern-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.pattern-sequence-panel__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+}
+
 /* Guardados */
 
 .empty-saves {
@@ -892,6 +1126,36 @@ b {
 
 /* Responsive */
 
+@media (max-width: 1100px) {
+  .header-row--middle {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .transport-bar,
+  .pattern-center-controls,
+  .master-volume-control {
+    justify-self: stretch;
+  }
+
+  .pattern-center-controls {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .master-volume-control {
+    grid-template-columns: 1.35rem minmax(8rem, 1fr);
+    width: min(18rem, 100%);
+    margin-left: 0;
+  }
+
+  .tracks {
+    padding-top: 15.5rem;
+  }
+}
+
 @media (max-width: 900px) {
   .header-row {
     padding-inline: 1rem;
@@ -918,7 +1182,7 @@ b {
 
   .tracks {
     padding: 1rem;
-    padding-top: 15rem;
+    padding-top: 18rem;
   }
 
   .track-shell {
@@ -947,7 +1211,9 @@ b {
 
   .roll-editor-panel__header,
   .load-panel__header,
-  .roll-editor-panel__footer {
+  .roll-editor-panel__footer,
+  .pattern-sequence-panel__header,
+  .pattern-sequence-panel__footer {
     flex-direction: column;
   }
 }

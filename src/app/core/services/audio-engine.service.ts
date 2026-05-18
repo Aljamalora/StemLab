@@ -1,6 +1,9 @@
 import { isPlatformBrowser } from '@angular/common';
 import { Injectable, NgZone, PLATFORM_ID, inject, signal } from '@angular/core';
-import { StemlabProject } from '../../shared/models/stemlab-project.model';
+import {
+  PatternId,
+  StemlabProject
+} from '../../shared/models/stemlab-project.model';
 import {
   DrumSound,
   DrumTrack,
@@ -19,6 +22,7 @@ export class AudioEngineService {
   readonly currentStep = signal<number | null>(null);
   readonly isPlaying = signal<boolean>(false);
   readonly isMetronomeEnabled = signal<boolean>(false);
+  readonly currentPlaybackPatternId = signal<PatternId | null>(null);
 
   private Tone: any = null;
 
@@ -32,6 +36,9 @@ export class AudioEngineService {
 
   private getLiveProject: (() => StemlabProject) | null = null;
 
+  private playbackPatternIndex = 0;
+  private currentSequencePatternId: PatternId | null = null;
+
   async play(projectGetter: () => StemlabProject): Promise<void> {
     if (!isPlatformBrowser(this.platformId)) {
       return;
@@ -44,6 +51,7 @@ export class AudioEngineService {
     const project = this.getLiveProject();
 
     this.setBpm(project.bpm);
+    this.setMasterVolume(project.masterVolume ?? 0.8);
 
     if (this.sequence) {
       this.Tone.Transport.start();
@@ -55,8 +63,12 @@ export class AudioEngineService {
       return;
     }
 
+    this.playbackPatternIndex = 0;
+    this.currentSequencePatternId = null;
+
     this.ngZone.run(() => {
       this.currentStep.set(null);
+      this.currentPlaybackPatternId.set(null);
       this.isPlaying.set(true);
     });
 
@@ -78,9 +90,22 @@ export class AudioEngineService {
           return;
         }
 
-        const hasSoloTracks = liveProject.tracks.some(track => track.solo);
+        const playbackPatternId = this.getPlaybackPatternId(
+          liveProject,
+          stepIndex
+        );
 
-        liveProject.tracks.forEach(track => {
+        const tracksToPlay = liveProject.patternSequenceEnabled
+          ? liveProject.patterns[playbackPatternId]
+          : liveProject.tracks;
+
+        if (!tracksToPlay) {
+          return;
+        }
+
+        const hasSoloTracks = tracksToPlay.some(track => track.solo);
+
+        tracksToPlay.forEach(track => {
           if (track.muted) {
             return;
           }
@@ -140,9 +165,12 @@ export class AudioEngineService {
     }
 
     this.getLiveProject = null;
+    this.playbackPatternIndex = 0;
+    this.currentSequencePatternId = null;
 
     this.ngZone.run(() => {
       this.currentStep.set(null);
+      this.currentPlaybackPatternId.set(null);
       this.isPlaying.set(false);
     });
   }
@@ -155,6 +183,14 @@ export class AudioEngineService {
     this.Tone.Transport.bpm.value = bpm;
   }
 
+  setMasterVolume(masterVolume: number): void {
+    if (!this.Tone) {
+      return;
+    }
+
+    this.Tone.Destination.volume.value = this.mapVolumeToDecibels(masterVolume);
+  }
+
   toggleMetronome(): void {
     this.isMetronomeEnabled.update(enabled => !enabled);
   }
@@ -163,17 +199,38 @@ export class AudioEngineService {
     this.isMetronomeEnabled.set(enabled);
   }
 
-  private stopSequenceOnly(): void {
-    if (this.Tone) {
-      this.Tone.Transport.stop();
-      this.Tone.Transport.cancel();
-      this.Tone.Transport.position = 0;
+  private getPlaybackPatternId(
+    project: StemlabProject,
+    stepIndex: number
+  ): PatternId {
+    if (
+      !project.patternSequenceEnabled ||
+      project.patternSequence.length === 0
+    ) {
+      const activePatternId = project.activePatternId ?? 'a';
+
+      this.ngZone.run(() => {
+        this.currentPlaybackPatternId.set(activePatternId);
+      });
+
+      return activePatternId;
     }
 
-    if (this.sequence) {
-      this.sequence.dispose();
-      this.sequence = null;
+    if (stepIndex === 0 || !this.currentSequencePatternId) {
+      const nextPatternId =
+        project.patternSequence[
+          this.playbackPatternIndex % project.patternSequence.length
+        ];
+
+      this.currentSequencePatternId = nextPatternId;
+      this.playbackPatternIndex++;
+
+      this.ngZone.run(() => {
+        this.currentPlaybackPatternId.set(nextPatternId);
+      });
     }
+
+    return this.currentSequencePatternId;
   }
 
   private playMetronomeClick(stepIndex: number, time: number): void {

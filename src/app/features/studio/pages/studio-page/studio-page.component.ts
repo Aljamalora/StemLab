@@ -2,7 +2,10 @@ import { Component, HostListener, computed, inject, signal } from '@angular/core
 import { AudioEngineService } from '../../../../core/services/audio-engine.service';
 import { ProjectStateService } from '../../../../core/services/project-state.service';
 import { StorageService } from '../../../../core/services/storage.service';
-import { StemlabProject } from '../../../../shared/models/stemlab-project.model';
+import {
+  PatternId,
+  StemlabProject
+} from '../../../../shared/models/stemlab-project.model';
 import {
   DrumSound,
   PianoInstrumentPreset,
@@ -29,11 +32,15 @@ export class StudioPageComponent {
   readonly currentStep = this.audioEngine.currentStep;
   readonly isPlaying = this.audioEngine.isPlaying;
   readonly isMetronomeEnabled = this.audioEngine.isMetronomeEnabled;
+  readonly currentPlaybackPatternId = this.audioEngine.currentPlaybackPatternId;
 
   readonly savedProjects = signal<StemlabProject[]>([]);
   readonly isLoadPanelOpen = signal<boolean>(false);
+  readonly isPatternSequencePanelOpen = signal<boolean>(false);
 
   readonly selectedPianoTrackId = signal<PianoTrackType | null>(null);
+
+  readonly patternIds: PatternId[] = ['a', 'b', 'c', 'd'];
 
   readonly selectedPianoTrack = computed<PianoTrack | null>(() => {
     const selectedTrackId = this.selectedPianoTrackId();
@@ -118,6 +125,8 @@ export class StudioPageComponent {
   private resizeStartStep = 0;
   private resizeRowElement: HTMLElement | null = null;
 
+  private draggedSequenceIndex: number | null = null;
+
   @HostListener('document:pointerup')
   @HostListener('document:pointercancel')
   stopPainting(): void {
@@ -168,6 +177,76 @@ export class StudioPageComponent {
     this.audioEngine.stop();
   }
 
+  setActivePattern(patternId: PatternId): void {
+    this.projectState.setActivePattern(patternId);
+  }
+
+  copyPattern(): void {
+    this.projectState.copyActivePattern();
+  }
+
+  pastePattern(): void {
+    this.projectState.pasteToActivePattern();
+  }
+
+  togglePatternSequenceEnabled(): void {
+    this.projectState.setPatternSequenceEnabled(
+      !this.project().patternSequenceEnabled
+    );
+  }
+
+  openPatternSequencePanel(): void {
+    this.closeLoadPanel();
+    this.closePianoRollEditor();
+    this.isPatternSequencePanelOpen.set(true);
+  }
+
+  closePatternSequencePanel(): void {
+    this.isPatternSequencePanelOpen.set(false);
+    this.draggedSequenceIndex = null;
+  }
+
+  addPatternToSequence(patternId: PatternId): void {
+    this.projectState.addPatternToSequence(patternId);
+  }
+
+  removePatternFromSequence(index: number): void {
+    this.projectState.removePatternFromSequence(index);
+  }
+
+  clearPatternSequence(): void {
+    this.projectState.clearPatternSequence();
+  }
+
+  startDraggingSequenceItem(index: number, event: DragEvent): void {
+    this.draggedSequenceIndex = index;
+    event.dataTransfer?.setData('text/plain', String(index));
+  }
+
+  allowSequenceDrop(event: DragEvent): void {
+    event.preventDefault();
+  }
+
+  dropSequenceItem(targetIndex: number, event: DragEvent): void {
+    event.preventDefault();
+
+    if (this.draggedSequenceIndex === null) {
+      return;
+    }
+
+    if (this.draggedSequenceIndex === targetIndex) {
+      this.draggedSequenceIndex = null;
+      return;
+    }
+
+    this.projectState.movePatternInSequence(
+      this.draggedSequenceIndex,
+      targetIndex
+    );
+
+    this.draggedSequenceIndex = null;
+  }
+
   clearTrack(trackId: TrackType): void {
     this.projectState.clearTrack(trackId);
   }
@@ -185,6 +264,7 @@ export class StudioPageComponent {
     this.projectState.newProject();
     this.closeLoadPanel();
     this.closePianoRollEditor();
+    this.closePatternSequencePanel();
   }
 
   save(): void {
@@ -204,6 +284,7 @@ export class StudioPageComponent {
   openLoadPanel(): void {
     this.audioEngine.stop();
     this.closePianoRollEditor();
+    this.closePatternSequencePanel();
     this.refreshSavedProjects();
     this.isLoadPanelOpen.set(true);
   }
@@ -225,6 +306,7 @@ export class StudioPageComponent {
     this.projectState.setProject(savedProject);
     this.closeLoadPanel();
     this.closePianoRollEditor();
+    this.closePatternSequencePanel();
   }
 
   deleteSavedProject(projectId: string, event: MouseEvent): void {
@@ -263,6 +345,7 @@ export class StudioPageComponent {
 
   openPianoRollEditor(trackId: PianoTrackType): void {
     this.closeLoadPanel();
+    this.closePatternSequencePanel();
     this.selectedPianoTrackId.set(trackId);
   }
 
@@ -387,6 +470,18 @@ export class StudioPageComponent {
 
     this.projectState.setBpm(bpm);
     this.audioEngine.setBpm(bpm);
+  }
+
+  changeMasterVolume(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const masterVolume = Number(input.value);
+
+    if (Number.isNaN(masterVolume)) {
+      return;
+    }
+
+    this.projectState.setMasterVolume(masterVolume);
+    this.audioEngine.setMasterVolume(masterVolume);
   }
 
   changeVolume(trackId: TrackType, event: Event): void {

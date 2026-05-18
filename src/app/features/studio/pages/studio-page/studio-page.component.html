@@ -121,6 +121,87 @@
           <span class="stop-indicator"></span>
         </button>
       </div>
+
+      <div class="pattern-center-controls">
+        <div class="sequence-controls">
+          <button
+            type="button"
+            class="sequence-toggle-button"
+            [class.sequence-toggle-button--active]="project().patternSequenceEnabled"
+            (click)="togglePatternSequenceEnabled()"
+            title="Activar o desactivar secuencia"
+            aria-label="Activar o desactivar secuencia"
+          >
+            Secuencia
+          </button>
+
+          <button
+            type="button"
+            class="sequence-edit-button"
+            (click)="openPatternSequencePanel()"
+            title="Editar orden de patrones"
+            aria-label="Editar orden de patrones"
+          >
+            Orden
+          </button>
+        </div>
+
+        <div class="pattern-controls" aria-label="Patrones">
+          @for (patternId of patternIds; track patternId) {
+            <button
+              type="button"
+              class="pattern-button"
+              [class.pattern-button--active]="project().activePatternId === patternId"
+              (click)="setActivePattern(patternId)"
+            >
+              {{ patternId.toUpperCase() }}
+            </button>
+          }
+
+          <button
+            type="button"
+            class="pattern-copy-button"
+            (click)="copyPattern()"
+            title="Copiar patrón"
+            aria-label="Copiar patrón"
+          >
+            Copiar
+          </button>
+
+          <button
+            type="button"
+            class="pattern-copy-button"
+            (click)="pastePattern()"
+            title="Pegar patrón"
+            aria-label="Pegar patrón"
+          >
+            Pegar
+          </button>
+        </div>
+
+        @if (project().patternSequenceEnabled && currentPlaybackPatternId()) {
+          <div class="current-pattern-badge">
+            Sonando {{ currentPlaybackPatternId()!.toUpperCase() }}
+          </div>
+        }
+      </div>
+
+      <label class="master-volume-control" title="Volumen general">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M5 10h4l5-4v12l-5-4H5z" />
+          <path d="M18 9a4 4 0 0 1 0 6" />
+        </svg>
+
+        <input
+          type="range"
+          min="0"
+          max="1"
+          step="0.01"
+          [value]="project().masterVolume ?? 0.8"
+          (input)="changeMasterVolume($event)"
+          aria-label="Volumen total de la canción"
+        />
+      </label>
     </section>
 
     <section class="header-row header-row--bottom">
@@ -142,7 +223,7 @@
 
   <section class="tracks">
     @for (track of project().tracks; track track.id) {
-      <article class="track-card">
+      <article [class]="'track-card track-card--' + track.id">
         <div class="track-shell">
           <aside class="track-side">
             <div class="track-title">
@@ -291,7 +372,10 @@
 
   @if (selectedPianoTrack(); as editingTrack) {
     <section class="modal-backdrop roll-editor-backdrop" (click)="closePianoRollEditor()">
-      <article class="roll-editor-panel" (click)="$event.stopPropagation()">
+      <article
+        [class]="'roll-editor-panel roll-editor-panel--' + editingTrack.id"
+        (click)="$event.stopPropagation()"
+      >
         <header class="roll-editor-panel__header">
           <div>
             <h2>Editar {{ editingTrack.name }}</h2>
@@ -416,6 +500,79 @@
               Clear
             </button>
           </div>
+        </footer>
+      </article>
+    </section>
+  }
+
+  @if (isPatternSequencePanelOpen()) {
+    <section class="modal-backdrop" (click)="closePatternSequencePanel()">
+      <article class="pattern-sequence-panel" (click)="$event.stopPropagation()">
+        <header class="pattern-sequence-panel__header">
+          <div>
+            <h2>Orden de patrones</h2>
+            <p>
+              Añade hasta 16 patrones. Arrastra para cambiar el orden o pulsa uno para eliminarlo.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            class="small-button"
+            (click)="closePatternSequencePanel()"
+          >
+            Cerrar
+          </button>
+        </header>
+
+        <section class="pattern-sequence-tray">
+          @if (project().patternSequence.length === 0) {
+            <div class="pattern-sequence-empty">
+              La secuencia está vacía.
+            </div>
+          } @else {
+            @for (patternId of project().patternSequence; track $index) {
+              <button
+                type="button"
+                class="pattern-sequence-item"
+                draggable="true"
+                (dragstart)="startDraggingSequenceItem($index, $event)"
+                (dragover)="allowSequenceDrop($event)"
+                (drop)="dropSequenceItem($index, $event)"
+                (click)="removePatternFromSequence($index)"
+                [attr.aria-label]="'Eliminar patrón ' + patternId.toUpperCase() + ' de la posición ' + ($index + 1)"
+              >
+                {{ patternId.toUpperCase() }}
+              </button>
+            }
+          }
+        </section>
+
+        <section class="pattern-sequence-add">
+          @for (patternId of patternIds; track patternId) {
+            <button
+              type="button"
+              class="pattern-button"
+              [disabled]="project().patternSequence.length >= 16"
+              (click)="addPatternToSequence(patternId)"
+            >
+              {{ patternId.toUpperCase() }}
+            </button>
+          }
+        </section>
+
+        <footer class="pattern-sequence-panel__footer">
+          <span>
+            {{ project().patternSequence.length }} / 16
+          </span>
+
+          <button
+            type="button"
+            class="danger-button"
+            (click)="clearPatternSequence()"
+          >
+            Vaciar secuencia
+          </button>
         </footer>
       </article>
     </section>
