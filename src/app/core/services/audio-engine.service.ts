@@ -23,6 +23,7 @@ export class AudioEngineService {
   readonly isPlaying = signal<boolean>(false);
   readonly isMetronomeEnabled = signal<boolean>(false);
   readonly currentPlaybackPatternId = signal<PatternId | null>(null);
+  readonly currentPlaybackSequenceIndex = signal<number | null>(null);
 
   private Tone: any = null;
 
@@ -69,6 +70,7 @@ export class AudioEngineService {
     this.ngZone.run(() => {
       this.currentStep.set(null);
       this.currentPlaybackPatternId.set(null);
+      this.currentPlaybackSequenceIndex.set(null);
       this.isPlaying.set(true);
     });
 
@@ -171,6 +173,7 @@ export class AudioEngineService {
     this.ngZone.run(() => {
       this.currentStep.set(null);
       this.currentPlaybackPatternId.set(null);
+      this.currentPlaybackSequenceIndex.set(null);
       this.isPlaying.set(false);
     });
   }
@@ -200,38 +203,40 @@ export class AudioEngineService {
   }
 
   private getPlaybackPatternId(
-    project: StemlabProject,
-    stepIndex: number
-  ): PatternId {
-    if (
-      !project.patternSequenceEnabled ||
-      project.patternSequence.length === 0
-    ) {
-      const activePatternId = project.activePatternId ?? 'a';
+  project: StemlabProject,
+  stepIndex: number
+): PatternId {
+  if (
+    !project.patternSequenceEnabled ||
+    project.patternSequence.length === 0
+  ) {
+    const activePatternId = project.activePatternId ?? 'a';
 
-      this.ngZone.run(() => {
-        this.currentPlaybackPatternId.set(activePatternId);
-      });
+    this.ngZone.run(() => {
+      this.currentPlaybackPatternId.set(activePatternId);
+      this.currentPlaybackSequenceIndex.set(null);
+    });
 
-      return activePatternId;
-    }
-
-    if (stepIndex === 0 || !this.currentSequencePatternId) {
-      const nextPatternId =
-        project.patternSequence[
-          this.playbackPatternIndex % project.patternSequence.length
-        ];
-
-      this.currentSequencePatternId = nextPatternId;
-      this.playbackPatternIndex++;
-
-      this.ngZone.run(() => {
-        this.currentPlaybackPatternId.set(nextPatternId);
-      });
-    }
-
-    return this.currentSequencePatternId;
+    return activePatternId;
   }
+
+  if (stepIndex === 0 || !this.currentSequencePatternId) {
+    const sequenceIndex =
+      this.playbackPatternIndex % project.patternSequence.length;
+
+    const nextPatternId = project.patternSequence[sequenceIndex];
+
+    this.currentSequencePatternId = nextPatternId;
+    this.playbackPatternIndex++;
+
+    this.ngZone.run(() => {
+      this.currentPlaybackPatternId.set(nextPatternId);
+      this.currentPlaybackSequenceIndex.set(sequenceIndex);
+    });
+  }
+
+  return this.currentSequencePatternId;
+}
 
   private playMetronomeClick(stepIndex: number, time: number): void {
     if (!this.metronome) {

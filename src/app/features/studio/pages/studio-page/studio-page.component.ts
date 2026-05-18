@@ -33,6 +33,7 @@ export class StudioPageComponent {
   readonly isPlaying = this.audioEngine.isPlaying;
   readonly isMetronomeEnabled = this.audioEngine.isMetronomeEnabled;
   readonly currentPlaybackPatternId = this.audioEngine.currentPlaybackPatternId;
+  readonly currentPlaybackSequenceIndex = this.audioEngine.currentPlaybackSequenceIndex;
 
   readonly savedProjects = signal<StemlabProject[]>([]);
   readonly isLoadPanelOpen = signal<boolean>(false);
