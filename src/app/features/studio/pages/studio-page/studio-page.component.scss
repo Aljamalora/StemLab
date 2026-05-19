@@ -669,6 +669,46 @@ b {
   box-shadow: 0 0 0 3px rgba(139, 201, 194, 0.28);
 }
 
+.drum-sound-selectors {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.35rem;
+  width: 100%;
+}
+
+.drum-sound-selector {
+  display: block;
+  min-width: 0;
+}
+
+.drum-sound-selector select {
+  width: 100%;
+  min-width: 0;
+  height: 2.55rem;
+  padding: 0 0.25rem;
+  border: 2px solid var(--line);
+  border-radius: 0.35rem;
+  background: white;
+  color: var(--text);
+  font-size: 0.75rem;
+  font-weight: 400;
+  outline: none;
+  cursor: pointer;
+}
+
+.drum-sound-selector select:focus {
+  border-color: var(--line-strong);
+  box-shadow: 0 0 0 3px rgba(139, 201, 194, 0.28);
+}
+
+.track-card--drums .track-side {
+  min-height: 10.5rem;
+}
+
+.track-card--drums .track-main {
+  min-height: 10.5rem;
+}
+
 .track-volume {
   display: grid;
   grid-template-columns: 1.35rem 1fr;

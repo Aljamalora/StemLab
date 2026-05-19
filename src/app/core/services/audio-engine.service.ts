@@ -203,40 +203,40 @@ export class AudioEngineService {
   }
 
   private getPlaybackPatternId(
-  project: StemlabProject,
-  stepIndex: number
-): PatternId {
-  if (
-    !project.patternSequenceEnabled ||
-    project.patternSequence.length === 0
-  ) {
-    const activePatternId = project.activePatternId ?? 'a';
+    project: StemlabProject,
+    stepIndex: number
+  ): PatternId {
+    if (
+      !project.patternSequenceEnabled ||
+      project.patternSequence.length === 0
+    ) {
+      const activePatternId = project.activePatternId ?? 'a';
 
-    this.ngZone.run(() => {
-      this.currentPlaybackPatternId.set(activePatternId);
-      this.currentPlaybackSequenceIndex.set(null);
-    });
+      this.ngZone.run(() => {
+        this.currentPlaybackPatternId.set(activePatternId);
+        this.currentPlaybackSequenceIndex.set(null);
+      });
 
-    return activePatternId;
+      return activePatternId;
+    }
+
+    if (stepIndex === 0 || !this.currentSequencePatternId) {
+      const sequenceIndex =
+        this.playbackPatternIndex % project.patternSequence.length;
+
+      const nextPatternId = project.patternSequence[sequenceIndex];
+
+      this.currentSequencePatternId = nextPatternId;
+      this.playbackPatternIndex++;
+
+      this.ngZone.run(() => {
+        this.currentPlaybackPatternId.set(nextPatternId);
+        this.currentPlaybackSequenceIndex.set(sequenceIndex);
+      });
+    }
+
+    return this.currentSequencePatternId;
   }
-
-  if (stepIndex === 0 || !this.currentSequencePatternId) {
-    const sequenceIndex =
-      this.playbackPatternIndex % project.patternSequence.length;
-
-    const nextPatternId = project.patternSequence[sequenceIndex];
-
-    this.currentSequencePatternId = nextPatternId;
-    this.playbackPatternIndex++;
-
-    this.ngZone.run(() => {
-      this.currentPlaybackPatternId.set(nextPatternId);
-      this.currentPlaybackSequenceIndex.set(sequenceIndex);
-    });
-  }
-
-  return this.currentSequencePatternId;
-}
 
   private playMetronomeClick(stepIndex: number, time: number): void {
     if (!this.metronome) {
@@ -331,6 +331,10 @@ export class AudioEngineService {
 
       if (soundRow.sound === 'hihat') {
         drum.triggerAttackRelease('32n', time);
+      }
+
+      if (soundRow.sound === 'clap') {
+        drum.triggerAttackRelease('16n', time);
       }
     });
   }
@@ -510,6 +514,17 @@ export class AudioEngineService {
         modulationIndex: 32,
         resonance: 4000,
         octaves: 1.5
+      }).toDestination(),
+
+      clap: new this.Tone.NoiseSynth({
+        noise: {
+          type: 'white'
+        },
+        envelope: {
+          attack: 0.003,
+          decay: 0.28,
+          sustain: 0
+        }
       }).toDestination()
     };
 

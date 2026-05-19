@@ -117,6 +117,25 @@ export class StudioPageComponent {
     ]
   };
 
+  readonly drumSoundOptions: Array<{ value: DrumSound; label: string }> = [
+  {
+    value: 'kick',
+    label: 'Kick'
+  },
+  {
+    value: 'snare',
+    label: 'Snare'
+  },
+  {
+    value: 'hihat',
+    label: 'HiHat'
+  },
+  {
+    value: 'clap',
+    label: 'Clap'
+  }
+];
+
   private isPainting = false;
   private paintValue: boolean | null = null;
 
@@ -422,38 +441,38 @@ export class StudioPageComponent {
     this.applyPianoPaintValue(trackId, note, stepIndex);
   }
 
-  startPaintingDrumStep(
-    sound: DrumSound,
-    stepIndex: number,
-    currentActive: boolean,
-    event: PointerEvent
-  ): void {
-    event.preventDefault();
+startPaintingDrumStep(
+  rowIndex: number,
+  stepIndex: number,
+  currentActive: boolean,
+  event: PointerEvent
+): void {
+  event.preventDefault();
 
-    this.isPainting = true;
-    this.paintValue = !currentActive;
+  this.isPainting = true;
+  this.paintValue = !currentActive;
 
-    this.projectState.setDrumStep(
-      sound,
-      stepIndex,
-      this.paintValue
-    );
+  this.projectState.setDrumStep(
+    rowIndex,
+    stepIndex,
+    this.paintValue
+  );
+}
+
+paintDrumStep(
+  rowIndex: number,
+  stepIndex: number
+): void {
+  if (!this.isPainting || this.paintValue === null) {
+    return;
   }
 
-  paintDrumStep(
-    sound: DrumSound,
-    stepIndex: number
-  ): void {
-    if (!this.isPainting || this.paintValue === null) {
-      return;
-    }
-
-    this.projectState.setDrumStep(
-      sound,
-      stepIndex,
-      this.paintValue
-    );
-  }
+  this.projectState.setDrumStep(
+    rowIndex,
+    stepIndex,
+    this.paintValue
+  );
+}
 
   changeProjectName(event: Event): void {
     const input = event.target as HTMLInputElement;
@@ -505,6 +524,13 @@ export class StudioPageComponent {
 
     this.projectState.setPianoTrackInstrument(trackId, instrumentPreset);
   }
+
+  changeDrumSound(rowIndex: number, event: Event): void {
+  const select = event.target as HTMLSelectElement;
+  const sound = select.value as DrumSound;
+
+  this.projectState.setDrumRowSound(rowIndex, sound);
+}
 
   getInstrumentOptions(
     trackId: PianoTrackType

@@ -96,15 +96,19 @@ export class ProjectStateService {
     const drumRows: Array<Pick<DrumRow, 'sound' | 'label'>> = [
       {
         sound: 'kick',
-        label: 'Kick'
+        label: '1'
       },
       {
         sound: 'snare',
-        label: 'Snare'
+        label: '2'
       },
       {
         sound: 'hihat',
-        label: 'HiHat'
+        label: '3'
+      },
+      {
+        sound: 'clap',
+        label: '4'
       }
     ];
 
@@ -375,6 +379,32 @@ export class ProjectStateService {
     );
   }
 
+  setDrumRowSound(rowIndex: number, sound: DrumSound): void {
+    this.project.update(project =>
+      this.syncActivePattern({
+        ...project,
+        updatedAt: new Date().toISOString(),
+        tracks: project.tracks.map(track => {
+          if (track.kind !== 'drums') {
+            return track;
+          }
+
+          return {
+            ...track,
+            sounds: track.sounds.map((soundRow, index) =>
+              index === rowIndex
+                ? {
+                    ...soundRow,
+                    sound
+                  }
+                : soundRow
+            )
+          };
+        })
+      })
+    );
+  }
+
   toggleMute(trackId: TrackType): void {
     this.project.update(project =>
       this.syncActivePattern({
@@ -586,46 +616,46 @@ export class ProjectStateService {
     );
   }
 
-  setDrumStep(
-    sound: DrumSound,
-    stepIndex: number,
-    active: boolean
-  ): void {
-    this.project.update(project =>
-      this.syncActivePattern({
-        ...project,
-        updatedAt: new Date().toISOString(),
-        tracks: project.tracks.map(track => {
-          if (track.kind !== 'drums') {
-            return track;
-          }
+setDrumStep(
+  rowIndex: number,
+  stepIndex: number,
+  active: boolean
+): void {
+  this.project.update(project =>
+    this.syncActivePattern({
+      ...project,
+      updatedAt: new Date().toISOString(),
+      tracks: project.tracks.map(track => {
+        if (track.kind !== 'drums') {
+          return track;
+        }
 
-          return {
-            ...track,
-            sounds: track.sounds.map(soundRow => {
-              if (soundRow.sound !== sound) {
-                return soundRow;
-              }
+        return {
+          ...track,
+          sounds: track.sounds.map((soundRow, index) => {
+            if (index !== rowIndex) {
+              return soundRow;
+            }
 
-              return {
-                ...soundRow,
-                steps: soundRow.steps.map((step, index) => {
-                  if (index !== stepIndex) {
-                    return step;
-                  }
+            return {
+              ...soundRow,
+              steps: soundRow.steps.map((step, currentStepIndex) => {
+                if (currentStepIndex !== stepIndex) {
+                  return step;
+                }
 
-                  return {
-                    ...step,
-                    active
-                  };
-                })
-              };
-            })
-          };
-        })
+                return {
+                  ...step,
+                  active
+                };
+              })
+            };
+          })
+        };
       })
-    );
-  }
+    })
+  );
+}
 
   clearTrack(trackId: TrackType): void {
     this.project.update(project =>
@@ -821,11 +851,11 @@ export class ProjectStateService {
 
     const validPatternIds: PatternId[] = ['a', 'b', 'c', 'd'];
 
-const safeSequence: PatternId[] = Array.isArray(project.patternSequence)
-  ? project.patternSequence.filter((patternId): patternId is PatternId =>
-      validPatternIds.includes(patternId as PatternId)
-    )
-  : ['a'];
+    const safeSequence: PatternId[] = Array.isArray(project.patternSequence)
+      ? project.patternSequence.filter((patternId): patternId is PatternId =>
+          validPatternIds.includes(patternId as PatternId)
+        )
+      : ['a'];
 
     return {
       ...project,
@@ -850,11 +880,43 @@ const safeSequence: PatternId[] = Array.isArray(project.patternSequence)
         });
       }
 
+      const defaultDrumRows: DrumRow[] = [
+        {
+          sound: 'kick',
+          label: '1',
+          steps: this.createEmptySteps()
+        },
+        {
+          sound: 'snare',
+          label: '2',
+          steps: this.createEmptySteps()
+        },
+        {
+          sound: 'hihat',
+          label: '3',
+          steps: this.createEmptySteps()
+        },
+        {
+          sound: 'clap',
+          label: '4',
+          steps: this.createEmptySteps()
+        }
+      ];
+
       return {
         ...track,
         solo: track.solo ?? false,
         muted: track.muted ?? false,
-        volume: track.volume ?? 0.8
+        volume: track.volume ?? 0.8,
+        sounds: defaultDrumRows.map((defaultRow, index) => {
+          const existingRow = track.sounds[index];
+
+          return {
+            sound: existingRow?.sound ?? defaultRow.sound,
+            label: String(index + 1),
+            steps: this.normalizeSteps(existingRow?.steps)
+          };
+        })
       };
     });
   }

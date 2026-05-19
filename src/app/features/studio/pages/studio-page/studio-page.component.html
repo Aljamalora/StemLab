@@ -303,6 +303,26 @@
               </label>
             }
 
+            @if (track.kind === 'drums') {
+  <div class="drum-sound-selectors">
+    @for (soundRow of track.sounds; track $index) {
+      <label class="drum-sound-selector">
+  <select
+    [value]="soundRow.sound"
+    (change)="changeDrumSound($index, $event)"
+    [attr.aria-label]="'Sonido del carril ' + ($index + 1)"
+  >
+    @for (soundOption of drumSoundOptions; track soundOption.value) {
+      <option [value]="soundOption.value">
+        {{ soundOption.label }}
+      </option>
+    }
+  </select>
+</label>
+    }
+  </div>
+}
+
             <label class="track-volume">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M5 10h4l5-4v12l-5-4H5z" />
@@ -401,7 +421,7 @@
 
             @if (track.kind === 'drums') {
               <div class="drum-roll drum-roll--main">
-                @for (soundRow of track.sounds; track soundRow.sound) {
+                @for (soundRow of track.sounds; track $index; let rowIndex = $index) {
                   <div class="roll-row">
                     <div class="roll-label">
                       {{ soundRow.label }}
@@ -413,8 +433,8 @@
                         class="step step--drum"
                         [class.step--active]="step.active"
                         [class.step--playing]="isCurrentStep($index)"
-                        (pointerdown)="startPaintingDrumStep(soundRow.sound, $index, step.active, $event)"
-                        (pointerenter)="paintDrumStep(soundRow.sound, $index)"
+                        (pointerdown)="startPaintingDrumStep(rowIndex, $index, step.active, $event)"
+                        (pointerenter)="paintDrumStep(rowIndex, $index)"
                         [attr.aria-label]="soundRow.label + ' paso ' + ($index + 1)"
                       ></button>
                     }

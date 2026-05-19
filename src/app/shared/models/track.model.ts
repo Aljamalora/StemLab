@@ -4,7 +4,7 @@ export type PianoTrackType = Exclude<TrackType, 'drums'>;
 
 export type PianoInstrumentPreset = 'default' | 'soft' | 'bright';
 
-export type DrumSound = 'kick' | 'snare' | 'hihat';
+export type DrumSound = 'kick' | 'snare' | 'hihat' | 'clap';
 
 export interface PianoRollCell {
   active: boolean;
